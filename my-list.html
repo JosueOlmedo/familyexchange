@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🎁 Mi Lista de Deseos - Intercambio Navideño</title>
+  <title>🎁 Family Gift Exchange</title>
   <link rel="stylesheet" href="css/styles.css">
   <link href="https://fonts.googleapis.com/css2?family=Mountains+of+Christmas:wght@400;700&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
@@ -11,53 +11,96 @@
 <body>
   <div class="snowflakes" aria-hidden="true" id="snowflakes"></div>
 
-  <header>
-    <h1><i class="fas fa-gift"></i> Mi Lista de Deseos <i class="fas fa-tree"></i></h1>
-    <p id="headerSubtitle" style="color:rgba(255,255,255,0.8);margin-top:0.3rem;"></p>
+  <!-- LOGIN / REGISTER -->
+  <div class="register-overlay" id="authOverlay">
+    <div class="register-box">
+      <h1 id="authTitle">🎄</h1>
+      <p class="event-name" id="authEvent"></p>
+      <p class="subtitle" id="authSubtitle"></p>
+
+      <!-- Register fields (hidden after first time) -->
+      <div id="registerFields">
+        <p style="font-weight:600;margin-bottom:0.5rem;" id="authAvatarLabel">Pick your avatar:</p>
+        <div class="avatar-picker" id="avatarPicker"></div>
+      </div>
+
+      <div class="form-group">
+        <input type="password" id="authPassword" placeholder="Password" style="text-align:center;">
+      </div>
+      <button class="btn btn-christmas" id="authEnter" style="margin-top:1rem;">Enter</button>
+      <p id="authError" style="color:var(--red);margin-top:0.5rem;display:none;"></p>
+    </div>
+  </div>
+
+  <!-- HEADER -->
+  <header id="appHeader" class="hidden">
+    <div class="header-top">
+      <span class="header-title"><i class="fas fa-gift"></i> <span id="headerEvent"></span></span>
+      <div class="header-controls">
+        <div class="user-badge">
+          <span id="userAvatar" style="font-size:1.5rem;"></span>
+          <span id="userName"></span>
+        </div>
+      </div>
+    </div>
+    <nav>
+      <button class="nav-btn active" data-section="mylist"><i class="fas fa-list"></i> My List</button>
+      <button class="nav-btn" data-section="result"><i class="fas fa-gift"></i> My Match</button>
+    </nav>
   </header>
 
-  <main>
-    <!-- LOADING -->
-    <section id="loadingSection" class="section active">
-      <div class="card" style="text-align:center;">
-        <i class="fas fa-spinner fa-spin" style="font-size:2rem;color:var(--red);"></i>
-        <p style="margin-top:1rem;">Cargando tu lista...</p>
-      </div>
-    </section>
-
-    <!-- ERROR -->
-    <section id="errorSection" class="section">
-      <div class="card" style="text-align:center;">
-        <i class="fas fa-exclamation-triangle" style="font-size:3rem;color:var(--red);"></i>
-        <h2 style="margin-top:1rem;">Enlace inválido</h2>
-        <p style="color:#666;">Este enlace no es válido o no se pudo cargar la información. Contacta al organizador del intercambio.</p>
-      </div>
-    </section>
-
-    <!-- WISHLIST -->
-    <section id="wishlistSection" class="section">
+  <main id="appContent" class="hidden">
+    <!-- MY INFO + WISHLIST -->
+    <section id="mylist" class="section active">
       <div class="card">
         <h2><i class="fas fa-user"></i> <span id="memberName"></span></h2>
-        <p style="color:#666;margin-bottom:1rem;">
+        <p style="color:var(--text-secondary);margin-bottom:1rem;">
           <i class="fas fa-home"></i> <span id="memberFamily"></span> &nbsp;|&nbsp;
           <i class="fas fa-envelope"></i> <span id="memberEmail"></span>
         </p>
         <div class="info-banner" id="budgetBanner" style="display:none;">
-          <i class="fas fa-money-bill-wave"></i> Presupuesto: <span id="budgetAmount"></span>
+          <i class="fas fa-money-bill-wave"></i> Budget: <span id="budgetAmount"></span>
         </div>
-        <p style="margin:1rem 0;color:#666;" id="maxGiftsInfo"></p>
+        <p style="margin:1rem 0;color:var(--text-secondary);" id="maxGiftsInfo"></p>
 
         <div id="wishlistItems"></div>
 
         <button class="btn btn-secondary" id="addWishItem" style="margin-bottom:1rem;">
-          <i class="fas fa-plus"></i> Agregar Regalo
+          <i class="fas fa-plus"></i> Add Gift
         </button>
-
         <button class="btn btn-christmas" id="saveWishlist">
-          <i class="fas fa-save"></i> Guardar Mi Lista
+          <i class="fas fa-save"></i> Save My List
         </button>
-
         <div id="saveStatus" style="text-align:center;margin-top:1rem;"></div>
+      </div>
+    </section>
+
+    <!-- MY MATCH (post-sorteo) -->
+    <section id="result" class="section">
+      <div class="card" id="noResultCard">
+        <div style="text-align:center;padding:2rem;">
+          <i class="fas fa-hourglass-half" style="font-size:3rem;color:var(--gold);"></i>
+          <h2 style="margin-top:1rem;color:var(--gold);">Draw not done yet</h2>
+          <p style="color:var(--text-secondary);">The admin hasn't done the draw yet. Check back later!</p>
+        </div>
+      </div>
+      <div class="card hidden" id="resultCard">
+        <h2><i class="fas fa-gift"></i> Your Match!</h2>
+        <p id="sorteoDateInfo" style="color:var(--text-secondary);margin-bottom:1rem;"></p>
+
+        <div style="background:linear-gradient(135deg,#27ae60,#1e8449);border-radius:12px;padding:20px;text-align:center;margin:1rem 0;">
+          <div style="font-size:2.5rem;">🎁</div>
+          <p style="color:rgba(255,255,255,0.8);font-size:0.9rem;margin:5px 0;">You got:</p>
+          <h2 style="color:#fff;font-size:1.8rem;margin:5px 0;" id="matchName"></h2>
+          <p style="color:rgba(255,255,255,0.7);font-size:0.85rem;" id="matchFamily"></p>
+        </div>
+
+        <div id="matchBudget" style="display:none;" class="info-banner">
+          <i class="fas fa-money-bill-wave"></i> Budget: <span id="matchBudgetAmount"></span>
+        </div>
+
+        <h3 style="color:var(--red);margin:1.5rem 0 0.5rem;"><i class="fas fa-gifts"></i> Their Wishlist:</h3>
+        <div id="matchWishlist"></div>
       </div>
     </section>
   </main>
@@ -66,172 +109,305 @@
 
   <script src="js/storage.js"></script>
   <script>
-    // ==================== PARTICIPANT PAGE ====================
+    const AVATARS = ['🎅','🤶','🧑‍🎄','⛄','🦌','🎄','🐧','🎁','⭐','🔔','❄️','🍪'];
     const params = new URLSearchParams(window.location.search);
     const memberId = params.get('id');
     const binId = params.get('bin');
-    let memberData = null;
+
+    let cloudData = null;
+    let memberInfo = null;
     let maxGifts = 5;
     let wishlistItems = [];
+    let selectedAvatar = null;
 
     document.addEventListener('DOMContentLoaded', async () => {
       createSnowflakes();
+      initTheme();
 
-      if (!memberId || !binId) {
-        showSection('errorSection');
-        return;
-      }
+      if (!memberId || !binId) { showError('Invalid link'); return; }
 
       CloudStorage.init(binId);
-      const data = await CloudStorage.load();
-
-      if (!data) {
-        showSection('errorSection');
-        return;
-      }
+      cloudData = await CloudStorage.load();
+      if (!cloudData) { showError('Could not load data'); return; }
 
       // Find member
-      let found = null;
-      for (const f of (data.families || [])) {
+      for (const f of (cloudData.families || [])) {
         const m = f.members.find(m => m.id === memberId);
-        if (m) { found = { ...m, familyName: f.name }; break; }
+        if (m) { memberInfo = { ...m, familyName: f.name }; break; }
+      }
+      if (!memberInfo) { showError('Member not found'); return; }
+
+      maxGifts = cloudData.config?.maxGifts || 5;
+      wishlistItems = cloudData.wishlists?.[memberId] || [];
+
+      // Fill auth screen
+      document.getElementById('authEvent').textContent = cloudData.config?.eventName || 'Gift Exchange';
+
+      if (memberInfo.password) {
+        // Returning user: login
+        document.getElementById('authTitle').textContent = `Welcome back, ${memberInfo.name}!`;
+        document.getElementById('authSubtitle').textContent = 'Enter your password';
+        document.getElementById('registerFields').classList.add('hidden');
+        document.getElementById('authPassword').placeholder = 'Password';
+        document.getElementById('authEnter').textContent = 'Enter';
+      } else {
+        // New user: register
+        document.getElementById('authTitle').textContent = `Hi ${memberInfo.name}! 🎄`;
+        document.getElementById('authSubtitle').textContent = 'Set up your account';
+        document.getElementById('authPassword').placeholder = 'Create a password';
+        document.getElementById('authEnter').textContent = 'Register';
+        buildAvatarPicker();
       }
 
-      if (!found) {
-        showSection('errorSection');
-        return;
+      document.getElementById('authEnter').addEventListener('click', handleAuth);
+      document.getElementById('authPassword').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') handleAuth();
+      });
+    });
+
+    function handleAuth() {
+      const pw = document.getElementById('authPassword').value;
+      if (!pw) { showAuthError('Enter a password'); return; }
+
+      if (memberInfo.password) {
+        // Login
+        if (pw !== memberInfo.password) { showAuthError('Wrong password'); return; }
+      } else {
+        // Register: save password + avatar
+        memberInfo.password = pw;
+        memberInfo.avatar = selectedAvatar || '🎅';
+        // Update in cloud data
+        for (const f of cloudData.families) {
+          const m = f.members.find(m => m.id === memberId);
+          if (m) { m.password = pw; m.avatar = selectedAvatar || '🎅'; break; }
+        }
+        CloudStorage.save(cloudData);
       }
 
-      memberData = found;
-      maxGifts = data.config?.maxGifts || 5;
-      wishlistItems = data.wishlists?.[memberId] || [];
+      showApp();
+    }
 
-      document.getElementById('memberName').textContent = found.name;
-      document.getElementById('memberFamily').textContent = found.familyName;
-      document.getElementById('memberEmail').textContent = found.email;
-      document.getElementById('headerSubtitle').textContent = data.config?.eventName || 'Intercambio Navideño';
-      document.getElementById('maxGiftsInfo').textContent = `Puedes agregar hasta ${maxGifts} regalos a tu lista.`;
+    function showApp() {
+      document.getElementById('authOverlay').classList.add('hidden');
+      document.getElementById('appHeader').classList.remove('hidden');
+      document.getElementById('appContent').classList.remove('hidden');
 
-      if (data.config?.budget) {
+      document.getElementById('headerEvent').textContent = cloudData.config?.eventName || '';
+      document.getElementById('userName').textContent = memberInfo.name;
+      document.getElementById('userAvatar').textContent = memberInfo.avatar || '🎅';
+      document.getElementById('memberName').textContent = memberInfo.name;
+      document.getElementById('memberFamily').textContent = memberInfo.familyName;
+      document.getElementById('memberEmail').textContent = memberInfo.email || 'N/A';
+      document.getElementById('maxGiftsInfo').textContent = `You can add up to ${maxGifts} gifts.`;
+
+      if (cloudData.config?.budget) {
         document.getElementById('budgetBanner').style.display = 'block';
-        document.getElementById('budgetAmount').textContent = data.config.budget;
+        document.getElementById('budgetAmount').textContent = cloudData.config.budget;
       }
 
-      renderItems();
-      showSection('wishlistSection');
+      renderWishlist();
+      renderResult();
+      initNav();
 
       document.getElementById('addWishItem').addEventListener('click', addItem);
       document.getElementById('saveWishlist').addEventListener('click', saveList);
-    });
-
-    function showSection(id) {
-      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-      document.getElementById(id).classList.add('active');
     }
 
-    function renderItems() {
+    // ==================== NAV ====================
+    function initNav() {
+      document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+          document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+          btn.classList.add('active');
+          document.getElementById(btn.dataset.section).classList.add('active');
+        });
+      });
+    }
+
+    // ==================== WISHLIST ====================
+    function renderWishlist() {
       const container = document.getElementById('wishlistItems');
       document.getElementById('addWishItem').classList.toggle('hidden', wishlistItems.length >= maxGifts);
 
       if (!wishlistItems.length) {
-        container.innerHTML = '<p style="color:#999;text-align:center;padding:2rem;">¡Tu lista está vacía! Agrega los regalos que te gustaría recibir 🎄</p>';
+        container.innerHTML = '<p style="color:var(--text-secondary);text-align:center;padding:2rem;">Your list is empty! Add gifts you\'d like to receive 🎄</p>';
         return;
       }
 
       container.innerHTML = wishlistItems.map((item, i) => `
         <div class="wish-item">
           <h4>
-            <span>🎁 Regalo #${i + 1}</span>
+            <span>🎁 Gift #${i + 1}</span>
             <button class="btn btn-danger" onclick="removeItem(${i})"><i class="fas fa-trash"></i></button>
           </h4>
           <div class="form-group">
-            <label>Nombre/Título:</label>
-            <input type="text" value="${esc(item.title)}" oninput="updateItem(${i},'title',this.value)" placeholder="Ej: Audífonos Bluetooth">
+            <label>Name/Title:</label>
+            <input type="text" value="${esc(item.title)}" oninput="updateItem(${i},'title',this.value)">
           </div>
           <div class="form-group">
-            <label>Enlace (URL):</label>
+            <label>Link (URL):</label>
             <input type="url" value="${esc(item.link)}" oninput="updateItem(${i},'link',this.value)" placeholder="https://...">
           </div>
           <div class="form-group">
-            <label>URL de imagen:</label>
-            <input type="url" value="${esc(item.imageUrl)}" oninput="updateItem(${i},'imageUrl',this.value); this.nextElementSibling.src=this.value;" placeholder="https://...imagen.jpg">
+            <label>Image URL:</label>
+            <input type="url" value="${esc(item.imageUrl)}" oninput="updateItem(${i},'imageUrl',this.value); this.nextElementSibling.src=this.value;" placeholder="https://...">
             <img class="preview-img" src="${esc(item.imageUrl)}" onerror="this.style.display='none'" onload="this.style.display='block'" style="${item.imageUrl ? '' : 'display:none'}">
           </div>
           <div class="form-group">
-            <label>Descripción:</label>
-            <textarea oninput="updateItem(${i},'description',this.value)" placeholder="Color, talla, modelo...">${esc(item.description)}</textarea>
+            <label>Description:</label>
+            <textarea oninput="updateItem(${i},'description',this.value)">${esc(item.description)}</textarea>
           </div>
           <div class="form-group">
-            <label>Notas:</label>
-            <textarea oninput="updateItem(${i},'notes',this.value)" placeholder="Notas adicionales...">${esc(item.notes)}</textarea>
+            <label>Notes:</label>
+            <textarea oninput="updateItem(${i},'notes',this.value)">${esc(item.notes)}</textarea>
           </div>
         </div>
       `).join('');
     }
 
     function addItem() {
-      if (wishlistItems.length >= maxGifts) {
-        toast(`Máximo ${maxGifts} regalos`, 'error');
-        return;
-      }
+      if (wishlistItems.length >= maxGifts) { toast(`Max ${maxGifts} gifts`, 'error'); return; }
       wishlistItems.push({ title: '', link: '', imageUrl: '', description: '', notes: '' });
-      renderItems();
+      renderWishlist();
     }
 
-    function updateItem(index, field, value) {
-      if (wishlistItems[index]) wishlistItems[index][field] = value;
-    }
+    function updateItem(i, field, value) { if (wishlistItems[i]) wishlistItems[i][field] = value; }
 
-    function removeItem(index) {
-      wishlistItems.splice(index, 1);
-      renderItems();
-    }
+    function removeItem(i) { wishlistItems.splice(i, 1); renderWishlist(); }
 
     async function saveList() {
       const btn = document.getElementById('saveWishlist');
       const status = document.getElementById('saveStatus');
       btn.disabled = true;
-      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
-      status.innerHTML = '';
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
 
-      const ok = await CloudStorage.saveWishlist(memberId, wishlistItems);
+      if (!cloudData.wishlists) cloudData.wishlists = {};
+      cloudData.wishlists[memberId] = wishlistItems;
+      const ok = await CloudStorage.save(cloudData);
 
       btn.disabled = false;
-      btn.innerHTML = '<i class="fas fa-save"></i> Guardar Mi Lista';
+      btn.innerHTML = '<i class="fas fa-save"></i> Save My List';
 
       if (ok) {
-        toast('¡Lista guardada exitosamente! ✅', 'success');
-        status.innerHTML = '<span style="color:var(--green);"><i class="fas fa-check-circle"></i> Guardado correctamente</span>';
+        toast('List saved! ✅', 'success');
+        status.innerHTML = '<span style="color:var(--green);"><i class="fas fa-check-circle"></i> Saved</span>';
       } else {
-        toast('Error al guardar. Intenta de nuevo.', 'error');
-        status.innerHTML = '<span style="color:var(--red);"><i class="fas fa-times-circle"></i> Error al guardar</span>';
+        toast('Error saving. Try again.', 'error');
+        status.innerHTML = '<span style="color:var(--red);"><i class="fas fa-times-circle"></i> Error</span>';
       }
+    }
+
+    // ==================== RESULT ====================
+    function renderResult() {
+      if (!cloudData.sorteoResult) return;
+
+      const match = cloudData.sorteoResult.find(r => r.giverId === memberId);
+      if (!match) return;
+
+      // Find receiver info
+      let receiver = null;
+      for (const f of cloudData.families) {
+        const m = f.members.find(m => m.id === match.receiverId);
+        if (m) { receiver = { ...m, familyName: f.name }; break; }
+      }
+      if (!receiver) return;
+
+      document.getElementById('noResultCard').classList.add('hidden');
+      document.getElementById('resultCard').classList.remove('hidden');
+
+      document.getElementById('matchName').textContent = receiver.name;
+      document.getElementById('matchFamily').textContent = receiver.familyName;
+
+      if (cloudData.sorteoDate) {
+        const d = new Date(cloudData.sorteoDate);
+        document.getElementById('sorteoDateInfo').innerHTML =
+          `<i class="fas fa-calendar"></i> Draw date: ${d.toLocaleDateString()} at ${d.toLocaleTimeString()}`;
+      }
+
+      if (cloudData.config?.budget) {
+        document.getElementById('matchBudget').style.display = 'block';
+        document.getElementById('matchBudgetAmount').textContent = cloudData.config.budget;
+      }
+
+      // Render receiver's wishlist
+      const items = cloudData.wishlists?.[receiver.id] || [];
+      const container = document.getElementById('matchWishlist');
+
+      if (!items.length) {
+        container.innerHTML = '<p style="color:var(--text-secondary);">No wishlist yet.</p>';
+        return;
+      }
+
+      container.innerHTML = items.filter(w => w.title.trim()).map((w, i) => `
+        <div class="wish-item" style="border-color:var(--green);">
+          <h4 style="color:var(--green);">🎁 ${esc(w.title)}</h4>
+          ${w.description ? `<p style="color:var(--text-secondary);">${esc(w.description)}</p>` : ''}
+          ${w.link ? `<p><a href="${esc(w.link)}" target="_blank" style="color:var(--green);"><i class="fas fa-external-link-alt"></i> View link</a></p>` : ''}
+          ${w.imageUrl ? `<img class="preview-img" src="${esc(w.imageUrl)}" style="display:block;" onerror="this.style.display='none'">` : ''}
+          ${w.notes ? `<p style="color:var(--text-secondary);font-style:italic;font-size:0.85rem;">📝 ${esc(w.notes)}</p>` : ''}
+        </div>
+      `).join('');
+    }
+
+    // ==================== AVATAR PICKER ====================
+    function buildAvatarPicker() {
+      const container = document.getElementById('avatarPicker');
+      container.innerHTML = '';
+      AVATARS.forEach(emoji => {
+        const div = document.createElement('div');
+        div.className = 'avatar-option';
+        div.style.cssText = 'display:flex;align-items:center;justify-content:center;font-size:2rem;';
+        div.textContent = emoji;
+        div.addEventListener('click', () => {
+          container.querySelectorAll('.avatar-option').forEach(el => el.classList.remove('selected'));
+          div.classList.add('selected');
+          selectedAvatar = emoji;
+        });
+        container.appendChild(div);
+      });
+      container.children[0]?.click();
     }
 
     // ==================== UTILS ====================
-    function esc(str) { const d = document.createElement('div'); d.textContent = str || ''; return d.innerHTML; }
-
+    function esc(s) { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
     function toast(msg, type = 'info') {
       const el = document.getElementById('toast');
-      el.textContent = msg;
-      el.className = `toast ${type}`;
+      el.textContent = msg; el.className = `toast ${type}`;
       setTimeout(() => el.classList.add('hidden'), 3500);
     }
-
+    function showError(msg) {
+      document.getElementById('authOverlay').innerHTML = `
+        <div class="register-box" style="text-align:center;">
+          <i class="fas fa-exclamation-triangle" style="font-size:3rem;color:var(--red);"></i>
+          <h2 style="margin-top:1rem;">${msg}</h2>
+          <p style="color:var(--text-secondary);">Contact the organizer.</p>
+        </div>`;
+    }
+    function showAuthError(msg) {
+      const el = document.getElementById('authError');
+      el.textContent = msg; el.style.display = 'block';
+      setTimeout(() => el.style.display = 'none', 3000);
+    }
+    function initTheme() {
+      const saved = localStorage.getItem('intercambio_theme') || 'dark';
+      document.documentElement.setAttribute('data-theme', saved);
+    }
     function createSnowflakes() {
-      const container = document.getElementById('snowflakes');
-      const flakes = ['❄', '❅', '❆', '✦'];
-      for (let i = 0; i < 30; i++) {
-        const el = document.createElement('div');
-        el.className = 'snowflake';
-        el.textContent = flakes[Math.floor(Math.random() * flakes.length)];
-        el.style.left = Math.random() * 100 + '%';
-        el.style.fontSize = (Math.random() * 1.2 + 0.5) + 'rem';
-        el.style.animationDuration = (Math.random() * 5 + 5) + 's';
-        el.style.animationDelay = (Math.random() * 8) + 's';
-        el.style.opacity = Math.random() * 0.6 + 0.2;
-        container.appendChild(el);
-      }
+      const c = document.getElementById('snowflakes');
+      ['❄','❅','❆','✦'].forEach(() => {
+        for (let i = 0; i < 8; i++) {
+          const el = document.createElement('div');
+          el.className = 'snowflake';
+          el.textContent = ['❄','❅','❆','✦'][Math.floor(Math.random()*4)];
+          el.style.left = Math.random()*100+'%';
+          el.style.fontSize = (Math.random()*1.2+0.5)+'rem';
+          el.style.animationDuration = (Math.random()*5+5)+'s';
+          el.style.animationDelay = (Math.random()*8)+'s';
+          el.style.opacity = Math.random()*0.6+0.2;
+          c.appendChild(el);
+        }
+      });
     }
   </script>
 </body>

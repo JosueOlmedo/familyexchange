@@ -20,7 +20,8 @@ function defaultState() {
     },
     families: [],
     wishlists: {},
-    sorteoResult: null
+    sorteoResult: null,
+    sorteoDate: null
   };
 }
 
@@ -661,6 +662,7 @@ async function startSorteo() {
   await sleep(4200);
 
   state.sorteoResult = result;
+  state.sorteoDate = new Date().toISOString();
   saveState();
   showResults(result);
   btn.disabled = false;
@@ -721,6 +723,7 @@ function showResults(result) {
 function clearSorteo() {
   if (!confirm(i18n.t('sorteo_confirm_clear'))) return;
   state.sorteoResult = null;
+  state.sorteoDate = null;
   saveState();
   document.getElementById('sorteoResults').classList.add('hidden');
   document.getElementById('sorteoResults').innerHTML = '';
