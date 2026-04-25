@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🎄 Intercambio Familiar Navideño</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Mountains+of+Christmas:wght@400;700&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+  <div class="snowflakes" aria-hidden="true" id="snowflakes"></div>
+
+  <!-- ==================== PIN OVERLAY ==================== -->
+  <div class="register-overlay hidden" id="pinOverlay">
+    <div class="register-box">
+      <h1 id="pinTitle">🔒</h1>
+      <p class="subtitle" id="pinSubtitle"></p>
+      <div class="form-group">
+        <input type="password" id="pinInput" maxlength="10" inputmode="numeric" style="text-align:center;font-size:1.5rem;letter-spacing:0.5rem;">
+      </div>
+      <button class="btn btn-christmas" id="pinEnter" style="margin-top:1rem;">OK</button>
+    </div>
+  </div>
+
+  <!-- ==================== REGISTRATION ==================== -->
+  <div class="register-overlay" id="registerOverlay">
+    <div class="register-box">
+      <h1 id="regTitle"></h1>
+      <p class="event-name" id="regEventName"></p>
+      <p class="subtitle" id="regSubtitle"></p>
+      <div class="form-group">
+        <input type="text" id="regName" maxlength="30" autofocus>
+      </div>
+      <p style="font-weight:600;margin-bottom:0.5rem;" id="regAvatarLabel"></p>
+      <div class="avatar-picker" id="avatarPicker"></div>
+      <button class="btn btn-christmas" id="regEnter" style="margin-top:1rem;"></button>
+      <!-- Lang toggle on register -->
+      <div style="margin-top:1.5rem;">
+        <button class="lang-toggle" id="regLangToggle" style="background:var(--bg-card-alt);color:var(--text-primary);border:2px solid var(--border-color);">ES / EN</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== HEADER ==================== -->
+  <header id="mainHeader" class="hidden">
+    <div class="header-top">
+      <span class="header-title"><i class="fas fa-gift"></i> <span data-i18n="admin_panel">Panel de Administración</span></span>
+      <div class="header-controls">
+        <div class="user-badge" id="userBadge">
+          <span id="userAvatar" style="font-size:1.5rem;display:none;"></span>
+          <span id="userName"></span>
+        </div>
+        <button class="theme-toggle" id="themeToggle" title="Dark/Light"><i class="fas fa-moon"></i></button>
+        <button class="lang-toggle" id="langToggle">ES</button>
+      </div>
+    </div>
+    <nav>
+      <button class="nav-btn active" data-section="config"><i class="fas fa-cog"></i> <span data-i18n="nav_config">Config</span></button>
+      <button class="nav-btn" data-section="families"><i class="fas fa-users"></i> <span data-i18n="nav_families">Familias</span></button>
+      <button class="nav-btn" data-section="wishlists"><i class="fas fa-list"></i> <span data-i18n="nav_wishlists">Listas</span></button>
+      <button class="nav-btn" data-section="sorteo"><i class="fas fa-random"></i> <span data-i18n="nav_sorteo">Sorteo</span></button>
+      <button class="nav-btn" data-section="export"><i class="fas fa-file-excel"></i> <span data-i18n="nav_export">Exportar</span></button>
+    </nav>
+  </header>
+
+  <main id="mainContent" class="hidden">
+    <!-- CONFIG -->
+    <section id="config" class="section active">
+      <div class="card">
+        <h2><i class="fas fa-sliders-h"></i> <span data-i18n="config_title">Configuración General</span></h2>
+        <div class="form-group">
+          <label data-i18n="config_max_gifts">Máximo de regalos por persona:</label>
+          <input type="number" id="maxGifts" min="1" max="20" value="5">
+        </div>
+        <div class="form-group">
+          <label data-i18n="config_event_name">Nombre del evento:</label>
+          <input type="text" id="eventName" value="Intercambio Navidad 2025">
+        </div>
+        <div class="form-group">
+          <label data-i18n="config_budget">Presupuesto máximo (opcional):</label>
+          <input type="text" id="budget" placeholder="$500 MXN">
+        </div>
+
+        <h3 style="margin:1.5rem 0 0.5rem;color:var(--red);"><i class="fas fa-lock"></i> <span data-i18n="admin_pin_title">Admin PIN</span></h3>
+        <div class="form-group">
+          <label data-i18n="admin_pin_label">PIN de administrador:</label>
+          <input type="password" id="adminPin" placeholder="1234" maxlength="10" inputmode="numeric">
+        </div>
+        <p style="color:var(--text-secondary);font-size:0.85rem;" data-i18n="admin_pin_hint"></p>
+
+        <h3 style="margin:1.5rem 0 0.5rem;color:var(--green);"><i class="fas fa-cloud"></i> <span data-i18n="config_npoint_title">Almacenamiento en la Nube</span></h3>
+        <div class="form-group">
+          <label data-i18n="config_npoint_label">npoint.io Bin ID:</label>
+          <input type="text" id="npointBinId" placeholder="abc123def456">
+        </div>
+        <div class="help-box" style="border-color:var(--green);">
+          <h3 style="color:var(--green);"><i class="fas fa-info-circle"></i> <span data-i18n="npoint_help_title"></span></h3>
+          <ol>
+            <li data-i18n-html="npoint_step1"></li>
+            <li data-i18n-html="npoint_step2"></li>
+            <li data-i18n-html="npoint_step3"></li>
+            <li data-i18n-html="npoint_step4"></li>
+            <li data-i18n-html="npoint_step5"></li>
+          </ol>
+        </div>
+
+        <h3 style="margin:1.5rem 0 0.5rem;color:var(--gold);"><i class="fas fa-envelope"></i> <span data-i18n="config_email_title">EmailJS</span></h3>
+        <div class="form-group">
+          <label data-i18n="config_sender">Tu correo:</label>
+          <input type="email" id="senderEmail" placeholder="tu@correo.com">
+        </div>
+        <div class="form-group">
+          <label>EmailJS Public Key:</label>
+          <input type="text" id="emailjsPublicKey" placeholder="Public key">
+        </div>
+        <div class="form-group">
+          <label>EmailJS Service ID:</label>
+          <input type="text" id="emailjsServiceId" placeholder="service_xxxxx">
+        </div>
+        <div class="form-group">
+          <label>EmailJS Template ID:</label>
+          <input type="text" id="emailjsTemplateId" placeholder="template_xxxxx">
+        </div>
+        <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+          <button class="btn btn-primary" id="saveConfig"><i class="fas fa-save"></i> <span data-i18n="config_save">Guardar</span></button>
+          <button class="btn btn-secondary" id="syncToCloud"><i class="fas fa-cloud-upload-alt"></i> <span data-i18n="config_upload">Subir</span></button>
+          <button class="btn btn-secondary" id="syncFromCloud"><i class="fas fa-cloud-download-alt"></i> <span data-i18n="config_download">Descargar</span></button>
+        </div>
+
+        <div class="help-box">
+          <h3><i class="fas fa-info-circle"></i> <span data-i18n="emailjs_help_title"></span></h3>
+          <ol>
+            <li data-i18n-html="emailjs_step1"></li>
+            <li data-i18n-html="emailjs_step2"></li>
+            <li data-i18n-html="emailjs_step3"></li>
+            <li data-i18n-html="emailjs_step4"></li>
+          </ol>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAMILIES -->
+    <section id="families" class="section">
+      <div class="card">
+        <h2><i class="fas fa-user-plus"></i> <span data-i18n="families_title">Agregar Familia</span></h2>
+        <div class="form-row">
+          <div class="form-group">
+            <label data-i18n="families_name_label">Nombre:</label>
+            <input type="text" id="familyName" data-i18n-placeholder="families_name_placeholder">
+          </div>
+          <button class="btn btn-primary" id="addFamily"><i class="fas fa-plus"></i> <span data-i18n="families_add">Agregar</span></button>
+        </div>
+      </div>
+      <div id="familiesList"></div>
+    </section>
+
+    <!-- WISHLISTS -->
+    <section id="wishlists" class="section">
+      <div class="card">
+        <h2><i class="fas fa-gifts"></i> <span data-i18n="wishlists_title">Listas de Deseos</span></h2>
+        <div class="form-group">
+          <label>Selecciona:</label>
+          <select id="wishlistPerson"></select>
+        </div>
+        <div id="wishlistForm" class="hidden">
+          <div id="wishlistItems"></div>
+          <button class="btn btn-secondary" id="addWishItem"><i class="fas fa-plus"></i> <span data-i18n="wishlists_add_gift">Agregar Regalo</span></button>
+          <button class="btn btn-primary" id="saveWishlist"><i class="fas fa-save"></i> <span data-i18n="wishlists_save">Guardar</span></button>
+        </div>
+      </div>
+      <div class="card" id="urlsCard">
+        <h2><i class="fas fa-link"></i> <span data-i18n="wishlists_urls_title">URLs Individuales</span></h2>
+        <p style="color:var(--text-secondary);margin-bottom:1rem;">
+          <span data-i18n="wishlists_urls_desc"></span> <strong data-i18n="wishlists_urls_requires"></strong>
+        </p>
+        <div id="memberUrls"></div>
+      </div>
+    </section>
+
+    <!-- SORTEO -->
+    <section id="sorteo" class="section">
+      <div class="card">
+        <h2><i class="fas fa-magic"></i> <span data-i18n="sorteo_title">¡Hora del Sorteo!</span></h2>
+        <div id="sorteoStatus"></div>
+        <div class="roulette-container" id="rouletteContainer">
+          <div class="roulette-wheel" id="rouletteWheel">
+            <div class="roulette-center"><i class="fas fa-gift"></i></div>
+          </div>
+          <div class="roulette-pointer"></div>
+        </div>
+        <button class="btn btn-christmas" id="startSorteo"><i class="fas fa-play"></i> <span data-i18n="sorteo_start">¡Iniciar!</span></button>
+        <div id="sorteoResults" class="hidden"></div>
+      </div>
+    </section>
+
+    <!-- EXPORT -->
+    <section id="export" class="section">
+      <div class="card">
+        <h2><i class="fas fa-file-excel"></i> <span data-i18n="export_title">Exportar Datos</span></h2>
+        <p style="color:var(--text-secondary);margin-bottom:1.5rem;" data-i18n="export_desc"></p>
+        <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+          <button class="btn btn-primary" id="exportParticipants"><i class="fas fa-users"></i> <span data-i18n="export_participants">Participantes</span></button>
+          <button class="btn btn-primary" id="exportWishlists"><i class="fas fa-gifts"></i> <span data-i18n="export_wishlists">Listas</span></button>
+          <button class="btn btn-primary" id="exportSorteo"><i class="fas fa-random"></i> <span data-i18n="export_sorteo">Sorteo</span></button>
+        </div>
+        <button class="btn btn-christmas" id="exportAll"><i class="fas fa-download"></i> <span data-i18n="export_all">Exportar Todo</span></button>
+      </div>
+    </section>
+  </main>
+
+  <!-- MODAL -->
+  <div class="modal-overlay hidden" id="modalOverlay">
+    <div class="modal">
+      <div class="modal-icon"><i class="fas fa-check-circle"></i></div>
+      <h2 id="modalTitle"></h2>
+      <p id="modalMessage"></p>
+      <div class="modal-actions">
+        <button class="btn btn-primary" id="modalSendEmail"><i class="fas fa-envelope"></i> <span data-i18n="sorteo_send_email">Enviar Correos</span></button>
+        <button class="btn btn-secondary" id="modalClose"><span data-i18n="close">Cerrar</span></button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="js/storage.js"></script>
+  <script src="js/i18n.js"></script>
+  <script src="js/app.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js" async></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" async></script>
+</body>
+</html>
