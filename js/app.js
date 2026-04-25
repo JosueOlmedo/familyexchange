@@ -96,6 +96,27 @@ function showApp() {
   renderMemberUrls();
   checkSorteoReady();
   bindEvents();
+
+  // Auto-refresh from cloud every 30s
+  setInterval(async () => {
+    const binId = state.config.npointBinId;
+    if (!binId) return;
+    CloudStorage.init(binId);
+    const data = await CloudStorage.load();
+    if (!data) return;
+    const localConfig = { ...state.config };
+    state = { ...defaultState(), ...data };
+    state.config.npointBinId = localConfig.npointBinId;
+    state.config.adminPin = localConfig.adminPin;
+    state.config.emailjsPublicKey = localConfig.emailjsPublicKey;
+    state.config.emailjsServiceId = localConfig.emailjsServiceId;
+    state.config.emailjsTemplateId = localConfig.emailjsTemplateId;
+    state.config.senderEmail = localConfig.senderEmail;
+    localStorage.setItem(STATE_KEY, JSON.stringify(state));
+    renderFamilies();
+    populateWishlistSelect();
+    console.log('Auto-refreshed from cloud');
+  }, 30000);
 }
 
 function bindEvents() {
@@ -590,9 +611,7 @@ function checkSorteoReady() {
   if (families.length < 2) issues.push(i18n.t('sorteo_need_families'));
 
   const noEmail = members.filter(m => !m.email.trim());
-  if (noEmail.length) {
-    statusEl.innerHTML += `<p style="color:var(--gold);"><i class="fas fa-info-circle"></i> ${i18n.t('sorteo_no_email').replace('{n}', noEmail.length).replace('{names}', noEmail.map(m => m.name).join(', '))}</p>`;
-  }
+  const noWishlist = members.filter(m => !(state.wishlists[m.id]?.length));
 
   if (issues.length) {
     statusEl.innerHTML = issues.map(i => `<p class="warning"><i class="fas fa-exclamation-triangle"></i> ${i}</p>`).join('');
@@ -600,6 +619,13 @@ function checkSorteoReady() {
   } else {
     statusEl.innerHTML = `<p class="ready"><i class="fas fa-check-circle"></i> ${i18n.t('sorteo_ready').replace('{n}', members.length).replace('{f}', families.length)}</p>`;
     btn.disabled = false;
+  }
+
+  if (noEmail.length) {
+    statusEl.innerHTML += `<p style="color:var(--gold);"><i class="fas fa-envelope"></i> ${noEmail.length} sin correo: ${noEmail.map(m => m.name).join(', ')}</p>`;
+  }
+  if (noWishlist.length) {
+    statusEl.innerHTML += `<p style="color:var(--gold);"><i class="fas fa-list"></i> ${noWishlist.length} sin lista: ${noWishlist.map(m => m.name).join(', ')}</p>`;
   }
 
   if (state.sorteoResult) showResults(state.sorteoResult);

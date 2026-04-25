@@ -31,6 +31,7 @@
           <span id="userAvatar" style="font-size:1.5rem;"></span>
           <span id="userName"></span>
         </div>
+        <button class="theme-toggle" id="logoutBtn" title="Logout"><i class="fas fa-sign-out-alt"></i></button>
       </div>
     </div>
     <nav>
@@ -526,6 +527,9 @@
 
       document.getElementById('addWishItem').addEventListener('click', addItem);
       document.getElementById('saveWishlist').addEventListener('click', saveList);
+      document.getElementById('logoutBtn').addEventListener('click', () => {
+        location.reload();
+      });
     }
 
     // ==================== NAV ====================
