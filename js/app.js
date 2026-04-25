@@ -391,6 +391,7 @@ function renderFamilies() {
           <div class="member-row">
             <input type="text" value="${esc(m.name)}" placeholder="${i18n.t('name')}" onchange="updateMember('${f.id}','${m.id}','name',this.value)">
             <input type="email" value="${esc(m.email)}" placeholder="${i18n.t('email')}" onchange="updateMember('${f.id}','${m.id}','email',this.value)">
+            <button class="btn btn-sm btn-gold" onclick="resetPassword('${f.id}','${m.id}')" title="Reset password"><i class="fas fa-key"></i></button>
             <button class="btn btn-danger" onclick="removeMember('${f.id}','${m.id}')"><i class="fas fa-times"></i></button>
           </div>
         `).join('')}

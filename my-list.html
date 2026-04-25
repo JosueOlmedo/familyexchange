@@ -11,23 +11,13 @@
 <body>
   <div class="snowflakes" aria-hidden="true" id="snowflakes"></div>
 
-  <!-- LOGIN / REGISTER -->
+  <!-- AUTH SCREEN -->
   <div class="register-overlay" id="authOverlay">
-    <div class="register-box">
+    <div class="register-box" id="authBox">
       <h1 id="authTitle">🎄</h1>
       <p class="event-name" id="authEvent"></p>
       <p class="subtitle" id="authSubtitle"></p>
-
-      <!-- Register fields (hidden after first time) -->
-      <div id="registerFields">
-        <p style="font-weight:600;margin-bottom:0.5rem;" id="authAvatarLabel">Pick your avatar:</p>
-        <div class="avatar-picker" id="avatarPicker"></div>
-      </div>
-
-      <div class="form-group">
-        <input type="password" id="authPassword" placeholder="Password" style="text-align:center;">
-      </div>
-      <button class="btn btn-christmas" id="authEnter" style="margin-top:1rem;">Enter</button>
+      <div id="authContent"></div>
       <p id="authError" style="color:var(--red);margin-top:0.5rem;display:none;"></p>
     </div>
   </div>
@@ -50,7 +40,7 @@
   </header>
 
   <main id="appContent" class="hidden">
-    <!-- MY INFO + WISHLIST -->
+    <!-- WISHLIST -->
     <section id="mylist" class="section active">
       <div class="card">
         <h2><i class="fas fa-user"></i> <span id="memberName"></span></h2>
@@ -62,9 +52,7 @@
           <i class="fas fa-money-bill-wave"></i> Budget: <span id="budgetAmount"></span>
         </div>
         <p style="margin:1rem 0;color:var(--text-secondary);" id="maxGiftsInfo"></p>
-
         <div id="wishlistItems"></div>
-
         <button class="btn btn-secondary" id="addWishItem" style="margin-bottom:1rem;">
           <i class="fas fa-plus"></i> Add Gift
         </button>
@@ -75,7 +63,7 @@
       </div>
     </section>
 
-    <!-- MY MATCH (post-sorteo) -->
+    <!-- MATCH RESULT -->
     <section id="result" class="section">
       <div class="card" id="noResultCard">
         <div style="text-align:center;padding:2rem;">
@@ -87,18 +75,15 @@
       <div class="card hidden" id="resultCard">
         <h2><i class="fas fa-gift"></i> Your Match!</h2>
         <p id="sorteoDateInfo" style="color:var(--text-secondary);margin-bottom:1rem;"></p>
-
         <div style="background:linear-gradient(135deg,#27ae60,#1e8449);border-radius:12px;padding:20px;text-align:center;margin:1rem 0;">
           <div style="font-size:2.5rem;">🎁</div>
           <p style="color:rgba(255,255,255,0.8);font-size:0.9rem;margin:5px 0;">You got:</p>
           <h2 style="color:#fff;font-size:1.8rem;margin:5px 0;" id="matchName"></h2>
           <p style="color:rgba(255,255,255,0.7);font-size:0.85rem;" id="matchFamily"></p>
         </div>
-
         <div id="matchBudget" style="display:none;" class="info-banner">
           <i class="fas fa-money-bill-wave"></i> Budget: <span id="matchBudgetAmount"></span>
         </div>
-
         <h3 style="color:var(--red);margin:1.5rem 0 0.5rem;"><i class="fas fa-gifts"></i> Their Wishlist:</h3>
         <div id="matchWishlist"></div>
       </div>
@@ -106,88 +91,260 @@
   </main>
 
   <div id="toast" class="toast hidden"></div>
-
   <script src="js/storage.js"></script>
   <script>
-    const AVATARS = ['🎅','🤶','🧑‍🎄','⛄','🦌','🎄','🐧','🎁','⭐','🔔','❄️','🍪'];
+    // ==================== CONFIG ====================
+    const AVATARS = ['🎅','🤶','🧑🎄','⛄','🦌','🎄','🐧','🎁','⭐','🔔','❄️','🍪'];
     const params = new URLSearchParams(window.location.search);
-    const memberId = params.get('id');
-    const binId = params.get('bin');
-
+    let binId = params.get('bin');
+    let memberId = params.get('id');
     let cloudData = null;
     let memberInfo = null;
     let maxGifts = 5;
     let wishlistItems = [];
     let selectedAvatar = null;
 
+    // ==================== INIT ====================
     document.addEventListener('DOMContentLoaded', async () => {
       createSnowflakes();
       initTheme();
 
-      if (!memberId || !binId) { showError('Invalid link'); return; }
+      if (!binId) { showError('Invalid link. Missing bin ID.'); return; }
 
       CloudStorage.init(binId);
       cloudData = await CloudStorage.load();
-      if (!cloudData) { showError('Could not load data'); return; }
+      if (!cloudData || !cloudData.families) { showError('Could not load data.'); return; }
 
-      // Find member
-      for (const f of (cloudData.families || [])) {
-        const m = f.members.find(m => m.id === memberId);
-        if (m) { memberInfo = { ...m, familyName: f.name }; break; }
-      }
-      if (!memberInfo) { showError('Member not found'); return; }
-
-      maxGifts = cloudData.config?.maxGifts || 5;
-      wishlistItems = cloudData.wishlists?.[memberId] || [];
-
-      // Fill auth screen
       document.getElementById('authEvent').textContent = cloudData.config?.eventName || 'Gift Exchange';
+      maxGifts = cloudData.config?.maxGifts || 5;
 
-      if (memberInfo.password) {
-        // Returning user: login
-        document.getElementById('authTitle').textContent = `Welcome back, ${memberInfo.name}!`;
-        document.getElementById('authSubtitle').textContent = 'Enter your password';
-        document.getElementById('registerFields').classList.add('hidden');
-        document.getElementById('authPassword').placeholder = 'Password';
-        document.getElementById('authEnter').textContent = 'Enter';
+      if (memberId) {
+        // Direct link with ID — find member
+        memberInfo = findMember(memberId);
+        if (!memberInfo) { showError('Member not found.'); return; }
+        wishlistItems = cloudData.wishlists?.[memberId] || [];
+        showAuthForMember();
       } else {
-        // New user: register
-        document.getElementById('authTitle').textContent = `Hi ${memberInfo.name}! 🎄`;
-        document.getElementById('authSubtitle').textContent = 'Set up your account';
-        document.getElementById('authPassword').placeholder = 'Create a password';
-        document.getElementById('authEnter').textContent = 'Register';
-        buildAvatarPicker();
+        // Base link — show login/register choice
+        showLanding();
       }
-
-      document.getElementById('authEnter').addEventListener('click', handleAuth);
-      document.getElementById('authPassword').addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') handleAuth();
-      });
     });
 
-    function handleAuth() {
-      const pw = document.getElementById('authPassword').value;
-      if (!pw) { showAuthError('Enter a password'); return; }
-
-      if (memberInfo.password) {
-        // Login
-        if (pw !== memberInfo.password) { showAuthError('Wrong password'); return; }
-      } else {
-        // Register: save password + avatar
-        memberInfo.password = pw;
-        memberInfo.avatar = selectedAvatar || '🎅';
-        // Update in cloud data
-        for (const f of cloudData.families) {
-          const m = f.members.find(m => m.id === memberId);
-          if (m) { m.password = pw; m.avatar = selectedAvatar || '🎅'; break; }
-        }
-        CloudStorage.save(cloudData);
+    function findMember(id) {
+      for (const f of cloudData.families) {
+        const m = f.members.find(m => m.id === id);
+        if (m) return { ...m, familyId: f.id, familyName: f.name };
       }
-
-      showApp();
+      return null;
     }
 
-    function showApp() {
+    function getAllRegisteredMembers() {
+      return cloudData.families.flatMap(f =>
+        f.members.filter(m => m.name && m.name.trim()).map(m => ({ ...m, familyId: f.id, familyName: f.name }))
+      );
+    }
+
+    // ==================== LANDING (base link) ====================
+    function showLanding() {
+      document.getElementById('authTitle').textContent = '🎄 ' + (cloudData.config?.eventName || 'Gift Exchange');
+      document.getElementById('authSubtitle').textContent = '';
+
+      const members = getAllRegisteredMembers();
+
+      document.getElementById('authContent').innerHTML = `
+        <div style="display:flex;gap:0.5rem;margin-top:1.5rem;flex-wrap:wrap;justify-content:center;">
+          <button class="btn btn-primary" id="btnLogin" style="flex:1;min-width:140px;">
+            <i class="fas fa-sign-in-alt"></i> I already registered
+          </button>
+          <button class="btn btn-christmas" id="btnRegister" style="flex:1;min-width:140px;margin:0;">
+            <i class="fas fa-user-plus"></i> Register
+          </button>
+        </div>
+      `;
+
+      document.getElementById('btnLogin').addEventListener('click', showLoginForm);
+      document.getElementById('btnRegister').addEventListener('click', showRegisterForm);
+    }
+
+    // ==================== LOGIN FORM ====================
+    function showLoginForm() {
+      const members = getAllRegisteredMembers().filter(m => m.password);
+      if (!members.length) {
+        showAuthError('No registered members yet. Register first!');
+        return;
+      }
+
+      document.getElementById('authTitle').textContent = '🔑 Login';
+      document.getElementById('authSubtitle').textContent = 'Select your name and enter your password';
+
+      document.getElementById('authContent').innerHTML = `
+        <div class="form-group">
+          <select id="loginSelect" style="width:100%;padding:0.7rem;border-radius:10px;border:2px solid var(--input-border);background:var(--input-bg);color:var(--text-primary);font-family:'Nunito',sans-serif;">
+            <option value="">-- Select your name --</option>
+            ${cloudData.families.map(f => {
+              const opts = f.members.filter(m => m.password).map(m =>
+                `<option value="${m.id}">${esc(m.name)} (${esc(f.name)})</option>`
+              ).join('');
+              return opts ? `<optgroup label="${esc(f.name)}">${opts}</optgroup>` : '';
+            }).join('')}
+          </select>
+        </div>
+        <div class="form-group">
+          <input type="password" id="loginPassword" placeholder="Password" style="text-align:center;">
+        </div>
+        <button class="btn btn-christmas" id="loginEnter" style="margin-top:0.5rem;">Enter</button>
+        <p style="margin-top:1rem;"><a href="#" id="backToLanding" style="color:var(--green);font-size:0.85rem;">← Back</a></p>
+      `;
+
+      document.getElementById('loginEnter').addEventListener('click', handleLogin);
+      document.getElementById('loginPassword').addEventListener('keydown', e => { if (e.key === 'Enter') handleLogin(); });
+      document.getElementById('backToLanding').addEventListener('click', (e) => { e.preventDefault(); showLanding(); });
+    }
+
+    function handleLogin() {
+      const id = document.getElementById('loginSelect').value;
+      const pw = document.getElementById('loginPassword').value;
+      if (!id) { showAuthError('Select your name'); return; }
+      if (!pw) { showAuthError('Enter your password'); return; }
+
+      const info = findMember(id);
+      if (!info || info.password !== pw) { showAuthError('Wrong password'); return; }
+
+      memberId = id;
+      memberInfo = info;
+      wishlistItems = cloudData.wishlists?.[memberId] || [];
+      showDashboard();
+    }
+
+    // ==================== REGISTER FORM ====================
+    function showRegisterForm() {
+      const families = cloudData.families.filter(f => f.name);
+      if (!families.length) { showAuthError('No families created yet. Ask the admin.'); return; }
+
+      document.getElementById('authTitle').textContent = '🎄 Register';
+      document.getElementById('authSubtitle').textContent = 'Join your family!';
+
+      document.getElementById('authContent').innerHTML = `
+        <div class="form-group">
+          <label style="font-weight:600;">Your family:</label>
+          <select id="regFamily" style="width:100%;padding:0.7rem;border-radius:10px;border:2px solid var(--input-border);background:var(--input-bg);color:var(--text-primary);font-family:'Nunito',sans-serif;">
+            <option value="">-- Select --</option>
+            ${families.map(f => `<option value="${f.id}">${esc(f.name)}</option>`).join('')}
+          </select>
+        </div>
+        <div class="form-group">
+          <label style="font-weight:600;">Your name:</label>
+          <input type="text" id="regName" placeholder="Your name" maxlength="30">
+        </div>
+        <div class="form-group">
+          <label style="font-weight:600;">Your email:</label>
+          <input type="email" id="regEmail" placeholder="your@email.com">
+        </div>
+        <p style="font-weight:600;margin:0.5rem 0;">Pick your avatar:</p>
+        <div class="avatar-picker" id="avatarPicker"></div>
+        <div class="form-group" style="margin-top:0.5rem;">
+          <label style="font-weight:600;">Create a password:</label>
+          <input type="password" id="regPassword" placeholder="Password" style="text-align:center;">
+        </div>
+        <button class="btn btn-christmas" id="regEnter" style="margin-top:0.5rem;">Register</button>
+        <p style="margin-top:1rem;"><a href="#" id="backToLanding2" style="color:var(--green);font-size:0.85rem;">← Back</a></p>
+      `;
+
+      buildAvatarPicker();
+      document.getElementById('regEnter').addEventListener('click', handleRegister);
+      document.getElementById('regPassword').addEventListener('keydown', e => { if (e.key === 'Enter') handleRegister(); });
+      document.getElementById('backToLanding2').addEventListener('click', (e) => { e.preventDefault(); showLanding(); });
+    }
+
+    function handleRegister() {
+      const familyId = document.getElementById('regFamily').value;
+      const name = document.getElementById('regName').value.trim();
+      const email = document.getElementById('regEmail').value.trim();
+      const pw = document.getElementById('regPassword').value;
+
+      if (!familyId) { showAuthError('Select your family'); return; }
+      if (!name) { showAuthError('Enter your name'); return; }
+      if (!pw) { showAuthError('Create a password'); return; }
+
+      // Check duplicate name in same family
+      const family = cloudData.families.find(f => f.id === familyId);
+      if (!family) { showAuthError('Family not found'); return; }
+      const dup = family.members.find(m => m.name.trim().toLowerCase() === name.toLowerCase());
+      if (dup) { showAuthError(`"${name}" already exists in this family`); return; }
+
+      // Create member
+      const newId = Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
+      const newMember = {
+        id: newId,
+        name: name,
+        email: email,
+        password: pw,
+        avatar: selectedAvatar || '🎅'
+      };
+      family.members.push(newMember);
+      CloudStorage.save(cloudData);
+
+      memberId = newId;
+      memberInfo = { ...newMember, familyId: family.id, familyName: family.name };
+      wishlistItems = [];
+      if (!cloudData.wishlists) cloudData.wishlists = {};
+
+      showDashboard();
+    }
+
+    // ==================== AUTH FOR DIRECT LINK (with ?id=) ====================
+    function showAuthForMember() {
+      if (memberInfo.password) {
+        document.getElementById('authTitle').textContent = `Welcome back, ${memberInfo.name}!`;
+        document.getElementById('authSubtitle').textContent = 'Enter your password';
+        document.getElementById('authContent').innerHTML = `
+          <div class="form-group">
+            <input type="password" id="directPassword" placeholder="Password" style="text-align:center;">
+          </div>
+          <button class="btn btn-christmas" id="directEnter" style="margin-top:0.5rem;">Enter</button>
+        `;
+        document.getElementById('directEnter').addEventListener('click', () => {
+          const pw = document.getElementById('directPassword').value;
+          if (pw === memberInfo.password) showDashboard();
+          else showAuthError('Wrong password');
+        });
+        document.getElementById('directPassword').addEventListener('keydown', e => {
+          if (e.key === 'Enter') document.getElementById('directEnter').click();
+        });
+      } else {
+        // First time via direct link — set password + avatar
+        document.getElementById('authTitle').textContent = `Hi ${memberInfo.name}! 🎄`;
+        document.getElementById('authSubtitle').textContent = 'Set up your account';
+        document.getElementById('authContent').innerHTML = `
+          <p style="font-weight:600;margin-bottom:0.5rem;">Pick your avatar:</p>
+          <div class="avatar-picker" id="avatarPicker"></div>
+          <div class="form-group" style="margin-top:0.5rem;">
+            <input type="password" id="directPassword" placeholder="Create a password" style="text-align:center;">
+          </div>
+          <button class="btn btn-christmas" id="directEnter" style="margin-top:0.5rem;">Register</button>
+        `;
+        buildAvatarPicker();
+        document.getElementById('directEnter').addEventListener('click', () => {
+          const pw = document.getElementById('directPassword').value;
+          if (!pw) { showAuthError('Create a password'); return; }
+          // Save to cloud
+          for (const f of cloudData.families) {
+            const m = f.members.find(m => m.id === memberId);
+            if (m) { m.password = pw; m.avatar = selectedAvatar || '🎅'; break; }
+          }
+          memberInfo.password = pw;
+          memberInfo.avatar = selectedAvatar || '🎅';
+          CloudStorage.save(cloudData);
+          showDashboard();
+        });
+        document.getElementById('directPassword').addEventListener('keydown', e => {
+          if (e.key === 'Enter') document.getElementById('directEnter').click();
+        });
+      }
+    }
+
+    // ==================== DASHBOARD ====================
+    function showDashboard() {
       document.getElementById('authOverlay').classList.add('hidden');
       document.getElementById('appHeader').classList.remove('hidden');
       document.getElementById('appContent').classList.remove('hidden');
@@ -234,34 +391,22 @@
         container.innerHTML = '<p style="color:var(--text-secondary);text-align:center;padding:2rem;">Your list is empty! Add gifts you\'d like to receive 🎄</p>';
         return;
       }
-
       container.innerHTML = wishlistItems.map((item, i) => `
         <div class="wish-item">
-          <h4>
-            <span>🎁 Gift #${i + 1}</span>
+          <h4><span>🎁 Gift #${i + 1}</span>
             <button class="btn btn-danger" onclick="removeItem(${i})"><i class="fas fa-trash"></i></button>
           </h4>
-          <div class="form-group">
-            <label>Name/Title:</label>
-            <input type="text" value="${esc(item.title)}" oninput="updateItem(${i},'title',this.value)">
-          </div>
-          <div class="form-group">
-            <label>Link (URL):</label>
-            <input type="url" value="${esc(item.link)}" oninput="updateItem(${i},'link',this.value)" placeholder="https://...">
-          </div>
-          <div class="form-group">
-            <label>Image URL:</label>
+          <div class="form-group"><label>Name/Title:</label>
+            <input type="text" value="${esc(item.title)}" oninput="updateItem(${i},'title',this.value)"></div>
+          <div class="form-group"><label>Link (URL):</label>
+            <input type="url" value="${esc(item.link)}" oninput="updateItem(${i},'link',this.value)" placeholder="https://..."></div>
+          <div class="form-group"><label>Image URL:</label>
             <input type="url" value="${esc(item.imageUrl)}" oninput="updateItem(${i},'imageUrl',this.value); this.nextElementSibling.src=this.value;" placeholder="https://...">
-            <img class="preview-img" src="${esc(item.imageUrl)}" onerror="this.style.display='none'" onload="this.style.display='block'" style="${item.imageUrl ? '' : 'display:none'}">
-          </div>
-          <div class="form-group">
-            <label>Description:</label>
-            <textarea oninput="updateItem(${i},'description',this.value)">${esc(item.description)}</textarea>
-          </div>
-          <div class="form-group">
-            <label>Notes:</label>
-            <textarea oninput="updateItem(${i},'notes',this.value)">${esc(item.notes)}</textarea>
-          </div>
+            <img class="preview-img" src="${esc(item.imageUrl)}" onerror="this.style.display='none'" onload="this.style.display='block'" style="${item.imageUrl ? '' : 'display:none'}"></div>
+          <div class="form-group"><label>Description:</label>
+            <textarea oninput="updateItem(${i},'description',this.value)">${esc(item.description)}</textarea></div>
+          <div class="form-group"><label>Notes:</label>
+            <textarea oninput="updateItem(${i},'notes',this.value)">${esc(item.notes)}</textarea></div>
         </div>
       `).join('');
     }
@@ -271,9 +416,7 @@
       wishlistItems.push({ title: '', link: '', imageUrl: '', description: '', notes: '' });
       renderWishlist();
     }
-
-    function updateItem(i, field, value) { if (wishlistItems[i]) wishlistItems[i][field] = value; }
-
+    function updateItem(i, field, val) { if (wishlistItems[i]) wishlistItems[i][field] = val; }
     function removeItem(i) { wishlistItems.splice(i, 1); renderWishlist(); }
 
     async function saveList() {
@@ -288,12 +431,11 @@
 
       btn.disabled = false;
       btn.innerHTML = '<i class="fas fa-save"></i> Save My List';
-
       if (ok) {
         toast('List saved! ✅', 'success');
         status.innerHTML = '<span style="color:var(--green);"><i class="fas fa-check-circle"></i> Saved</span>';
       } else {
-        toast('Error saving. Try again.', 'error');
+        toast('Error saving.', 'error');
         status.innerHTML = '<span style="color:var(--red);"><i class="fas fa-times-circle"></i> Error</span>';
       }
     }
@@ -301,11 +443,9 @@
     // ==================== RESULT ====================
     function renderResult() {
       if (!cloudData.sorteoResult) return;
-
       const match = cloudData.sorteoResult.find(r => r.giverId === memberId);
       if (!match) return;
 
-      // Find receiver info
       let receiver = null;
       for (const f of cloudData.families) {
         const m = f.members.find(m => m.id === match.receiverId);
@@ -315,31 +455,26 @@
 
       document.getElementById('noResultCard').classList.add('hidden');
       document.getElementById('resultCard').classList.remove('hidden');
-
       document.getElementById('matchName').textContent = receiver.name;
       document.getElementById('matchFamily').textContent = receiver.familyName;
 
       if (cloudData.sorteoDate) {
         const d = new Date(cloudData.sorteoDate);
         document.getElementById('sorteoDateInfo').innerHTML =
-          `<i class="fas fa-calendar"></i> Draw date: ${d.toLocaleDateString()} at ${d.toLocaleTimeString()}`;
+          `<i class="fas fa-calendar"></i> Draw: ${d.toLocaleDateString()} at ${d.toLocaleTimeString()}`;
       }
-
       if (cloudData.config?.budget) {
         document.getElementById('matchBudget').style.display = 'block';
         document.getElementById('matchBudgetAmount').textContent = cloudData.config.budget;
       }
 
-      // Render receiver's wishlist
-      const items = cloudData.wishlists?.[receiver.id] || [];
+      const items = (cloudData.wishlists?.[receiver.id] || []).filter(w => w.title.trim());
       const container = document.getElementById('matchWishlist');
-
       if (!items.length) {
         container.innerHTML = '<p style="color:var(--text-secondary);">No wishlist yet.</p>';
         return;
       }
-
-      container.innerHTML = items.filter(w => w.title.trim()).map((w, i) => `
+      container.innerHTML = items.map(w => `
         <div class="wish-item" style="border-color:var(--green);">
           <h4 style="color:var(--green);">🎁 ${esc(w.title)}</h4>
           ${w.description ? `<p style="color:var(--text-secondary);">${esc(w.description)}</p>` : ''}
@@ -352,21 +487,22 @@
 
     // ==================== AVATAR PICKER ====================
     function buildAvatarPicker() {
-      const container = document.getElementById('avatarPicker');
-      container.innerHTML = '';
+      const c = document.getElementById('avatarPicker');
+      if (!c) return;
+      c.innerHTML = '';
       AVATARS.forEach(emoji => {
         const div = document.createElement('div');
         div.className = 'avatar-option';
         div.style.cssText = 'display:flex;align-items:center;justify-content:center;font-size:2rem;';
         div.textContent = emoji;
         div.addEventListener('click', () => {
-          container.querySelectorAll('.avatar-option').forEach(el => el.classList.remove('selected'));
+          c.querySelectorAll('.avatar-option').forEach(el => el.classList.remove('selected'));
           div.classList.add('selected');
           selectedAvatar = emoji;
         });
-        container.appendChild(div);
+        c.appendChild(div);
       });
-      container.children[0]?.click();
+      c.children[0]?.click();
     }
 
     // ==================== UTILS ====================
@@ -377,8 +513,8 @@
       setTimeout(() => el.classList.add('hidden'), 3500);
     }
     function showError(msg) {
-      document.getElementById('authOverlay').innerHTML = `
-        <div class="register-box" style="text-align:center;">
+      document.getElementById('authBox').innerHTML = `
+        <div style="text-align:center;">
           <i class="fas fa-exclamation-triangle" style="font-size:3rem;color:var(--red);"></i>
           <h2 style="margin-top:1rem;">${msg}</h2>
           <p style="color:var(--text-secondary);">Contact the organizer.</p>
@@ -395,19 +531,17 @@
     }
     function createSnowflakes() {
       const c = document.getElementById('snowflakes');
-      ['❄','❅','❆','✦'].forEach(() => {
-        for (let i = 0; i < 8; i++) {
-          const el = document.createElement('div');
-          el.className = 'snowflake';
-          el.textContent = ['❄','❅','❆','✦'][Math.floor(Math.random()*4)];
-          el.style.left = Math.random()*100+'%';
-          el.style.fontSize = (Math.random()*1.2+0.5)+'rem';
-          el.style.animationDuration = (Math.random()*5+5)+'s';
-          el.style.animationDelay = (Math.random()*8)+'s';
-          el.style.opacity = Math.random()*0.6+0.2;
-          c.appendChild(el);
-        }
-      });
+      for (let i = 0; i < 30; i++) {
+        const el = document.createElement('div');
+        el.className = 'snowflake';
+        el.textContent = ['❄','❅','❆','✦'][Math.floor(Math.random()*4)];
+        el.style.left = Math.random()*100+'%';
+        el.style.fontSize = (Math.random()*1.2+0.5)+'rem';
+        el.style.animationDuration = (Math.random()*5+5)+'s';
+        el.style.animationDelay = (Math.random()*8)+'s';
+        el.style.opacity = Math.random()*0.6+0.2;
+        c.appendChild(el);
+      }
     }
   </script>
 </body>
