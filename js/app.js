@@ -33,6 +33,20 @@ function loadState() {
 
 function saveState() {
   localStorage.setItem(STATE_KEY, JSON.stringify(state));
+  autoSync();
+}
+
+let syncTimeout = null;
+function autoSync() {
+  const binId = state.config.npointBinId;
+  if (!binId) return;
+  // Debounce: wait 2s after last change to avoid spamming the API
+  clearTimeout(syncTimeout);
+  syncTimeout = setTimeout(async () => {
+    CloudStorage.init(binId);
+    const ok = await CloudStorage.save(state);
+    if (ok) console.log('Auto-synced to cloud');
+  }, 2000);
 }
 
 function loadSession() {
