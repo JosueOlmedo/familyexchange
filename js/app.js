@@ -104,9 +104,12 @@ function bindEvents() {
 
 // ==================== PIN SCREEN ====================
 function showPinScreen() {
+  document.getElementById('registerOverlay').classList.add('hidden');
   document.getElementById('pinOverlay').classList.remove('hidden');
+  document.getElementById('pinTitle').textContent = i18n.t('admin_pin_title');
   document.getElementById('pinSubtitle').textContent = i18n.t('admin_pin_subtitle');
   document.getElementById('pinInput').placeholder = i18n.t('admin_pin_placeholder');
+  document.getElementById('pinEnter').textContent = 'OK';
   document.getElementById('pinEnter').addEventListener('click', checkPin);
   document.getElementById('pinInput').addEventListener('keydown', (e) => {
     if (e.key === 'Enter') checkPin();
@@ -135,6 +138,7 @@ const AVATARS = [
 let selectedAvatar = null;
 
 function showRegistration() {
+  document.getElementById('pinOverlay').classList.add('hidden');
   const overlay = document.getElementById('registerOverlay');
   overlay.classList.remove('hidden');
 
