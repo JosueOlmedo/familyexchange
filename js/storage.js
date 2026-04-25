@@ -41,7 +41,7 @@ const CloudStorage = {
     }
   },
 
-  // Save only a member's wishlist (partial update via path)
+  // Save only a member's wishlist (read-merge-write to avoid overwriting other data)
   async saveWishlist(memberId, items) {
     if (!this.binId) return false;
     try {
@@ -52,6 +52,27 @@ const CloudStorage = {
       return await this.save(data);
     } catch (e) {
       console.error('CloudStorage saveWishlist error:', e);
+      return false;
+    }
+  },
+
+  // Save only a member's registration (read-merge-write)
+  async saveMember(familyId, member) {
+    if (!this.binId) return false;
+    try {
+      const data = await this.load();
+      if (!data) return false;
+      const family = (data.families || []).find(f => f.id === familyId);
+      if (!family) return false;
+      const idx = family.members.findIndex(m => m.id === member.id);
+      if (idx >= 0) {
+        family.members[idx] = { ...family.members[idx], ...member };
+      } else {
+        family.members.push(member);
+      }
+      return await this.save(data);
+    } catch (e) {
+      console.error('CloudStorage saveMember error:', e);
       return false;
     }
   },

@@ -428,7 +428,7 @@
         avatar: selectedAvatar || '🎅'
       };
       family.members.push(newMember);
-      CloudStorage.save(cloudData);
+      CloudStorage.saveMember(family.id, newMember);
 
       memberId = newId;
       memberInfo = { ...newMember, familyId: family.id, familyName: family.name };
@@ -480,7 +480,7 @@
           }
           memberInfo.password = pw;
           memberInfo.avatar = selectedAvatar || '🎅';
-          CloudStorage.save(cloudData);
+          CloudStorage.saveMember(memberInfo.familyId, { id: memberId, password: pw, avatar: selectedAvatar || '🎅' });
           showDashboard();
         });
         document.getElementById('directPassword').addEventListener('keydown', e => {
@@ -589,7 +589,7 @@
 
       if (!cloudData.wishlists) cloudData.wishlists = {};
       cloudData.wishlists[memberId] = wishlistItems;
-      const ok = await CloudStorage.save(cloudData);
+      const ok = await CloudStorage.saveWishlist(memberId, wishlistItems);
 
       btn.disabled = false;
       btn.innerHTML = `<i class="fas fa-save"></i> ${t('save_list')}`;

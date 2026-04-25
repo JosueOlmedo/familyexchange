@@ -41,12 +41,41 @@ let syncTimeout = null;
 function autoSync() {
   const binId = state.config.npointBinId;
   if (!binId) return;
-  // Debounce: wait 2s after last change to avoid spamming the API
   clearTimeout(syncTimeout);
   syncTimeout = setTimeout(async () => {
     CloudStorage.init(binId);
-    const ok = await CloudStorage.save(state);
-    if (ok) console.log('Auto-synced to cloud');
+    // Read-merge-write: preserve participant data (wishlists, passwords)
+    const cloud = await CloudStorage.load();
+    const merged = { ...state };
+    if (cloud) {
+      // Keep participant wishlists that admin doesn't have locally
+      merged.wishlists = { ...cloud.wishlists, ...state.wishlists };
+      // Keep participant passwords/avatars
+      merged.families = state.families.map(f => ({
+        ...f,
+        members: f.members.map(m => {
+          const cloudFamily = cloud.families?.find(cf => cf.id === f.id);
+          const cloudMember = cloudFamily?.members?.find(cm => cm.id === m.id);
+          if (cloudMember) {
+            return { ...m, password: m.password || cloudMember.password, avatar: m.avatar || cloudMember.avatar };
+          }
+          return m;
+        })
+      }));
+      // Keep participants that registered via my-list.html (not in admin's local state)
+      cloud.families?.forEach(cf => {
+        const localFamily = merged.families.find(f => f.id === cf.id);
+        if (localFamily) {
+          cf.members.forEach(cm => {
+            if (!localFamily.members.find(m => m.id === cm.id)) {
+              localFamily.members.push(cm);
+            }
+          });
+        }
+      });
+    }
+    const ok = await CloudStorage.save(merged);
+    if (ok) console.log('Auto-synced to cloud (merged)');
   }, 2000);
 }
 
