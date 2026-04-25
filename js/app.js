@@ -404,11 +404,6 @@ function updateMember(familyId, memberId, field, value) {
     const dup = family.members.find(m => m.id !== memberId && m.name.trim().toLowerCase() === value.trim().toLowerCase());
     if (dup) { toast(i18n.t('member_duplicate_name').replace('{name}', value), 'error'); renderFamilies(); return; }
   }
-  if (field === 'email' && value.trim()) {
-    const all = state.families.flatMap(f => f.members);
-    const dup = all.find(m => m.id !== memberId && m.email.trim().toLowerCase() === value.trim().toLowerCase());
-    if (dup) { toast(i18n.t('member_duplicate_email').replace('{email}', value), 'error'); renderFamilies(); return; }
-  }
 
   member[field] = value;
   saveState();
@@ -576,7 +571,7 @@ function checkSorteoReady() {
 
   const noEmail = members.filter(m => !m.email.trim());
   if (noEmail.length) {
-    issues.push(i18n.t('sorteo_no_email').replace('{n}', noEmail.length).replace('{names}', noEmail.map(m => m.name).join(', ')));
+    statusEl.innerHTML += `<p style="color:var(--gold);"><i class="fas fa-info-circle"></i> ${i18n.t('sorteo_no_email').replace('{n}', noEmail.length).replace('{names}', noEmail.map(m => m.name).join(', '))}</p>`;
   }
 
   if (issues.length) {
