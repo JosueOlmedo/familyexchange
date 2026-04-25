@@ -34,8 +34,8 @@
       </div>
     </div>
     <nav>
-      <button class="nav-btn active" data-section="mylist"><i class="fas fa-list"></i> My List</button>
-      <button class="nav-btn" data-section="result"><i class="fas fa-gift"></i> My Match</button>
+      <button class="nav-btn active" data-section="mylist"><i class="fas fa-list"></i> <span id="navMyList"></span></button>
+      <button class="nav-btn" data-section="result"><i class="fas fa-gift"></i> <span id="navMyMatch"></span></button>
     </nav>
   </header>
 
@@ -49,15 +49,15 @@
           <i class="fas fa-envelope"></i> <span id="memberEmail"></span>
         </p>
         <div class="info-banner" id="budgetBanner" style="display:none;">
-          <i class="fas fa-money-bill-wave"></i> Budget: <span id="budgetAmount"></span>
+          <i class="fas fa-money-bill-wave"></i> <span id="budgetLabel"></span>: <span id="budgetAmount"></span>
         </div>
         <p style="margin:1rem 0;color:var(--text-secondary);" id="maxGiftsInfo"></p>
         <div id="wishlistItems"></div>
         <button class="btn btn-secondary" id="addWishItem" style="margin-bottom:1rem;">
-          <i class="fas fa-plus"></i> Add Gift
+          <i class="fas fa-plus"></i> <span id="addGiftText"></span>
         </button>
         <button class="btn btn-christmas" id="saveWishlist">
-          <i class="fas fa-save"></i> Save My List
+          <i class="fas fa-save"></i> <span id="saveListText"></span>
         </button>
         <div id="saveStatus" style="text-align:center;margin-top:1rem;"></div>
       </div>
@@ -68,23 +68,23 @@
       <div class="card" id="noResultCard">
         <div style="text-align:center;padding:2rem;">
           <i class="fas fa-hourglass-half" style="font-size:3rem;color:var(--gold);"></i>
-          <h2 style="margin-top:1rem;color:var(--gold);">Draw not done yet</h2>
-          <p style="color:var(--text-secondary);">The admin hasn't done the draw yet. Check back later!</p>
+          <h2 style="margin-top:1rem;color:var(--gold);" id="noDrawTitle"></h2>
+          <p style="color:var(--text-secondary);" id="noDrawDesc"></p>
         </div>
       </div>
       <div class="card hidden" id="resultCard">
-        <h2><i class="fas fa-gift"></i> Your Match!</h2>
+        <h2><i class="fas fa-gift"></i> <span id="yourMatchTitle"></span></h2>
         <p id="sorteoDateInfo" style="color:var(--text-secondary);margin-bottom:1rem;"></p>
         <div style="background:linear-gradient(135deg,#27ae60,#1e8449);border-radius:12px;padding:20px;text-align:center;margin:1rem 0;">
           <div style="font-size:2.5rem;">🎁</div>
-          <p style="color:rgba(255,255,255,0.8);font-size:0.9rem;margin:5px 0;">You got:</p>
+          <p style="color:rgba(255,255,255,0.8);font-size:0.9rem;margin:5px 0;" id="youGotText"></p>
           <h2 style="color:#fff;font-size:1.8rem;margin:5px 0;" id="matchName"></h2>
           <p style="color:rgba(255,255,255,0.7);font-size:0.85rem;" id="matchFamily"></p>
         </div>
         <div id="matchBudget" style="display:none;" class="info-banner">
-          <i class="fas fa-money-bill-wave"></i> Budget: <span id="matchBudgetAmount"></span>
+          <i class="fas fa-money-bill-wave"></i> <span id="matchBudgetLabel"></span>: <span id="matchBudgetAmount"></span>
         </div>
-        <h3 style="color:var(--red);margin:1.5rem 0 0.5rem;"><i class="fas fa-gifts"></i> Their Wishlist:</h3>
+        <h3 style="color:var(--red);margin:1.5rem 0 0.5rem;"><i class="fas fa-gifts"></i> <span id="theirWishlistTitle"></span></h3>
         <div id="matchWishlist"></div>
       </div>
     </section>
@@ -104,16 +104,162 @@
     let wishlistItems = [];
     let selectedAvatar = null;
 
+    // ==================== i18n ====================
+    let lang = localStorage.getItem('intercambio_lang') || 'es';
+    const T = {
+      es: {
+        already_registered: 'Ya me registré',
+        register: 'Registrarme',
+        login_title: '🔑 Iniciar sesión',
+        login_subtitle: 'Selecciona tu nombre e ingresa tu contraseña',
+        select_name: '-- Selecciona tu nombre --',
+        password: 'Contraseña',
+        enter: 'Entrar',
+        back: '← Volver',
+        register_title: '🎄 Registro',
+        register_subtitle: '¡Únete a tu familia!',
+        your_family: 'Tu familia:',
+        select: '-- Selecciona --',
+        your_name: 'Tu nombre:',
+        name_placeholder: 'Tu nombre',
+        your_email: 'Tu correo:',
+        pick_avatar: 'Elige tu avatar:',
+        create_password: 'Crea una contraseña:',
+        register_btn: 'Registrarme',
+        welcome_back: '¡Bienvenido de nuevo, {name}!',
+        enter_password: 'Ingresa tu contraseña',
+        hi_name: '¡Hola {name}! 🎄',
+        setup_account: 'Configura tu cuenta',
+        create_pw_placeholder: 'Crea una contraseña',
+        my_list: 'Mi Lista',
+        my_match: 'Mi Amigo',
+        budget_label: 'Presupuesto',
+        can_add: 'Puedes agregar hasta {n} regalos.',
+        list_empty: '¡Tu lista está vacía! Agrega los regalos que te gustaría recibir 🎄',
+        gift_n: '🎁 Regalo #{n}',
+        gift_title: 'Nombre/Título:',
+        gift_link: 'Enlace (URL):',
+        gift_image: 'URL de imagen:',
+        gift_desc: 'Descripción:',
+        gift_notes: 'Notas:',
+        add_gift: 'Agregar Regalo',
+        save_list: 'Guardar Mi Lista',
+        saving: 'Guardando...',
+        saved: '¡Lista guardada! ✅',
+        save_error: 'Error al guardar.',
+        saved_ok: 'Guardado',
+        saved_fail: 'Error',
+        no_draw: 'Sorteo no realizado',
+        no_draw_desc: 'El admin aún no ha hecho el sorteo. ¡Vuelve más tarde!',
+        your_match: '¡Tu Amigo Secreto!',
+        you_got: 'Te tocó:',
+        draw_date: 'Sorteo',
+        their_wishlist: 'Su lista de deseos:',
+        no_wishlist: 'Aún no tiene lista.',
+        view_link: 'Ver enlace',
+        max_gifts: 'Máximo {n} regalos',
+        err_invalid: 'Enlace inválido.',
+        err_no_data: 'No se pudieron cargar los datos.',
+        err_not_found: 'Miembro no encontrado.',
+        err_select_name: 'Selecciona tu nombre',
+        err_enter_pw: 'Ingresa tu contraseña',
+        err_wrong_pw: 'Contraseña incorrecta',
+        err_no_members: 'No hay miembros registrados. ¡Regístrate primero!',
+        err_no_families: 'No hay familias creadas. Contacta al admin.',
+        err_select_family: 'Selecciona tu familia',
+        err_enter_name: 'Ingresa tu nombre',
+        err_create_pw: 'Crea una contraseña',
+        err_dup_name: '"{name}" ya existe en esta familia',
+        err_family_not_found: 'Familia no encontrada',
+        contact_organizer: 'Contacta al organizador.',
+      },
+      en: {
+        already_registered: 'I already registered',
+        register: 'Register',
+        login_title: '🔑 Login',
+        login_subtitle: 'Select your name and enter your password',
+        select_name: '-- Select your name --',
+        password: 'Password',
+        enter: 'Enter',
+        back: '← Back',
+        register_title: '🎄 Register',
+        register_subtitle: 'Join your family!',
+        your_family: 'Your family:',
+        select: '-- Select --',
+        your_name: 'Your name:',
+        name_placeholder: 'Your name',
+        your_email: 'Your email:',
+        pick_avatar: 'Pick your avatar:',
+        create_password: 'Create a password:',
+        register_btn: 'Register',
+        welcome_back: 'Welcome back, {name}!',
+        enter_password: 'Enter your password',
+        hi_name: 'Hi {name}! 🎄',
+        setup_account: 'Set up your account',
+        create_pw_placeholder: 'Create a password',
+        my_list: 'My List',
+        my_match: 'My Match',
+        budget_label: 'Budget',
+        can_add: 'You can add up to {n} gifts.',
+        list_empty: 'Your list is empty! Add gifts you\'d like to receive 🎄',
+        gift_n: '🎁 Gift #{n}',
+        gift_title: 'Name/Title:',
+        gift_link: 'Link (URL):',
+        gift_image: 'Image URL:',
+        gift_desc: 'Description:',
+        gift_notes: 'Notes:',
+        add_gift: 'Add Gift',
+        save_list: 'Save My List',
+        saving: 'Saving...',
+        saved: 'List saved! ✅',
+        save_error: 'Error saving.',
+        saved_ok: 'Saved',
+        saved_fail: 'Error',
+        no_draw: 'Draw not done yet',
+        no_draw_desc: 'The admin hasn\'t done the draw yet. Check back later!',
+        your_match: 'Your Match!',
+        you_got: 'You got:',
+        draw_date: 'Draw',
+        their_wishlist: 'Their Wishlist:',
+        no_wishlist: 'No wishlist yet.',
+        view_link: 'View link',
+        max_gifts: 'Max {n} gifts',
+        err_invalid: 'Invalid link.',
+        err_no_data: 'Could not load data.',
+        err_not_found: 'Member not found.',
+        err_select_name: 'Select your name',
+        err_enter_pw: 'Enter your password',
+        err_wrong_pw: 'Wrong password',
+        err_no_members: 'No registered members yet. Register first!',
+        err_no_families: 'No families created yet. Ask the admin.',
+        err_select_family: 'Select your family',
+        err_enter_name: 'Enter your name',
+        err_create_pw: 'Create a password',
+        err_dup_name: '"{name}" already exists in this family',
+        err_family_not_found: 'Family not found',
+        contact_organizer: 'Contact the organizer.',
+      }
+    };
+    function t(key) { return T[lang]?.[key] || T['en'][key] || key; }
+    function toggleLang() {
+      lang = lang === 'es' ? 'en' : 'es';
+      localStorage.setItem('intercambio_lang', lang);
+      updateLangBtn();
+    }
+    function updateLangBtn() {
+      document.querySelectorAll('.lang-toggle').forEach(b => b.textContent = lang === 'es' ? 'ES / EN' : 'EN / ES');
+    }
+
     // ==================== INIT ====================
     document.addEventListener('DOMContentLoaded', async () => {
       createSnowflakes();
       initTheme();
 
-      if (!binId) { showError('Invalid link. Missing bin ID.'); return; }
+      if (!binId) { showError(t('err_invalid')); return; }
 
       CloudStorage.init(binId);
       cloudData = await CloudStorage.load();
-      if (!cloudData || !cloudData.families) { showError('Could not load data.'); return; }
+      if (!cloudData || !cloudData.families) { showError(t('err_no_data')); return; }
 
       document.getElementById('authEvent').textContent = cloudData.config?.eventName || 'Gift Exchange';
       maxGifts = cloudData.config?.maxGifts || 5;
@@ -121,7 +267,7 @@
       if (memberId) {
         // Direct link with ID — find member
         memberInfo = findMember(memberId);
-        if (!memberInfo) { showError('Member not found.'); return; }
+        if (!memberInfo) { showError(t('err_not_found')); return; }
         wishlistItems = cloudData.wishlists?.[memberId] || [];
         showAuthForMember();
       } else {
@@ -154,11 +300,14 @@
       document.getElementById('authContent').innerHTML = `
         <div style="display:flex;gap:0.5rem;margin-top:1.5rem;flex-wrap:wrap;justify-content:center;">
           <button class="btn btn-primary" id="btnLogin" style="flex:1;min-width:140px;">
-            <i class="fas fa-sign-in-alt"></i> I already registered
+            <i class="fas fa-sign-in-alt"></i> ${t('already_registered')}
           </button>
           <button class="btn btn-christmas" id="btnRegister" style="flex:1;min-width:140px;margin:0;">
-            <i class="fas fa-user-plus"></i> Register
+            <i class="fas fa-user-plus"></i> ${t('register')}
           </button>
+        </div>
+        <div style="margin-top:1.5rem;">
+          <button class="lang-toggle" onclick="toggleLang();showLanding();" style="background:var(--bg-card-alt);color:var(--text-primary);border:2px solid var(--border-color);">${lang === 'es' ? 'ES / EN' : 'EN / ES'}</button>
         </div>
       `;
 
@@ -169,18 +318,15 @@
     // ==================== LOGIN FORM ====================
     function showLoginForm() {
       const members = getAllRegisteredMembers().filter(m => m.password);
-      if (!members.length) {
-        showAuthError('No registered members yet. Register first!');
-        return;
-      }
+      if (!members.length) { showAuthError(t('err_no_members')); return; }
 
-      document.getElementById('authTitle').textContent = '🔑 Login';
-      document.getElementById('authSubtitle').textContent = 'Select your name and enter your password';
+      document.getElementById('authTitle').textContent = t('login_title');
+      document.getElementById('authSubtitle').textContent = t('login_subtitle');
 
       document.getElementById('authContent').innerHTML = `
         <div class="form-group">
           <select id="loginSelect" style="width:100%;padding:0.7rem;border-radius:10px;border:2px solid var(--input-border);background:var(--input-bg);color:var(--text-primary);font-family:'Nunito',sans-serif;">
-            <option value="">-- Select your name --</option>
+            <option value="">${t('select_name')}</option>
             ${cloudData.families.map(f => {
               const opts = f.members.filter(m => m.password).map(m =>
                 `<option value="${m.id}">${esc(m.name)} (${esc(f.name)})</option>`
@@ -190,10 +336,10 @@
           </select>
         </div>
         <div class="form-group">
-          <input type="password" id="loginPassword" placeholder="Password" style="text-align:center;">
+          <input type="password" id="loginPassword" placeholder="${t('password')}" style="text-align:center;">
         </div>
-        <button class="btn btn-christmas" id="loginEnter" style="margin-top:0.5rem;">Enter</button>
-        <p style="margin-top:1rem;"><a href="#" id="backToLanding" style="color:var(--green);font-size:0.85rem;">← Back</a></p>
+        <button class="btn btn-christmas" id="loginEnter" style="margin-top:0.5rem;">${t('enter')}</button>
+        <p style="margin-top:1rem;"><a href="#" id="backToLanding" style="color:var(--green);font-size:0.85rem;">${t('back')}</a></p>
       `;
 
       document.getElementById('loginEnter').addEventListener('click', handleLogin);
@@ -204,11 +350,11 @@
     function handleLogin() {
       const id = document.getElementById('loginSelect').value;
       const pw = document.getElementById('loginPassword').value;
-      if (!id) { showAuthError('Select your name'); return; }
-      if (!pw) { showAuthError('Enter your password'); return; }
+      if (!id) { showAuthError(t('err_select_name')); return; }
+      if (!pw) { showAuthError(t('err_enter_pw')); return; }
 
       const info = findMember(id);
-      if (!info || info.password !== pw) { showAuthError('Wrong password'); return; }
+      if (!info || info.password !== pw) { showAuthError(t('err_wrong_pw')); return; }
 
       memberId = id;
       memberInfo = info;
@@ -219,35 +365,35 @@
     // ==================== REGISTER FORM ====================
     function showRegisterForm() {
       const families = cloudData.families.filter(f => f.name);
-      if (!families.length) { showAuthError('No families created yet. Ask the admin.'); return; }
+      if (!families.length) { showAuthError(t('err_no_families')); return; }
 
-      document.getElementById('authTitle').textContent = '🎄 Register';
-      document.getElementById('authSubtitle').textContent = 'Join your family!';
+      document.getElementById('authTitle').textContent = t('register_title');
+      document.getElementById('authSubtitle').textContent = t('register_subtitle');
 
       document.getElementById('authContent').innerHTML = `
         <div class="form-group">
-          <label style="font-weight:600;">Your family:</label>
+          <label style="font-weight:600;">${t('your_family')}</label>
           <select id="regFamily" style="width:100%;padding:0.7rem;border-radius:10px;border:2px solid var(--input-border);background:var(--input-bg);color:var(--text-primary);font-family:'Nunito',sans-serif;">
-            <option value="">-- Select --</option>
+            <option value="">${t('select')}</option>
             ${families.map(f => `<option value="${f.id}">${esc(f.name)}</option>`).join('')}
           </select>
         </div>
         <div class="form-group">
-          <label style="font-weight:600;">Your name:</label>
-          <input type="text" id="regName" placeholder="Your name" maxlength="30">
+          <label style="font-weight:600;">${t('your_name')}</label>
+          <input type="text" id="regName" placeholder="${t('name_placeholder')}" maxlength="30">
         </div>
         <div class="form-group">
-          <label style="font-weight:600;">Your email:</label>
+          <label style="font-weight:600;">${t('your_email')}</label>
           <input type="email" id="regEmail" placeholder="your@email.com">
         </div>
-        <p style="font-weight:600;margin:0.5rem 0;">Pick your avatar:</p>
+        <p style="font-weight:600;margin:0.5rem 0;">${t('pick_avatar')}</p>
         <div class="avatar-picker" id="avatarPicker"></div>
         <div class="form-group" style="margin-top:0.5rem;">
-          <label style="font-weight:600;">Create a password:</label>
-          <input type="password" id="regPassword" placeholder="Password" style="text-align:center;">
+          <label style="font-weight:600;">${t('create_password')}</label>
+          <input type="password" id="regPassword" placeholder="${t('password')}" style="text-align:center;">
         </div>
-        <button class="btn btn-christmas" id="regEnter" style="margin-top:0.5rem;">Register</button>
-        <p style="margin-top:1rem;"><a href="#" id="backToLanding2" style="color:var(--green);font-size:0.85rem;">← Back</a></p>
+        <button class="btn btn-christmas" id="regEnter" style="margin-top:0.5rem;">${t('register_btn')}</button>
+        <p style="margin-top:1rem;"><a href="#" id="backToLanding2" style="color:var(--green);font-size:0.85rem;">${t('back')}</a></p>
       `;
 
       buildAvatarPicker();
@@ -262,15 +408,14 @@
       const email = document.getElementById('regEmail').value.trim();
       const pw = document.getElementById('regPassword').value;
 
-      if (!familyId) { showAuthError('Select your family'); return; }
-      if (!name) { showAuthError('Enter your name'); return; }
-      if (!pw) { showAuthError('Create a password'); return; }
+      if (!familyId) { showAuthError(t('err_select_family')); return; }
+      if (!name) { showAuthError(t('err_enter_name')); return; }
+      if (!pw) { showAuthError(t('err_create_pw')); return; }
 
-      // Check duplicate name in same family
       const family = cloudData.families.find(f => f.id === familyId);
-      if (!family) { showAuthError('Family not found'); return; }
+      if (!family) { showAuthError(t('err_family_not_found')); return; }
       const dup = family.members.find(m => m.name.trim().toLowerCase() === name.toLowerCase());
-      if (dup) { showAuthError(`"${name}" already exists in this family`); return; }
+      if (dup) { showAuthError(t('err_dup_name').replace('{name}', name)); return; }
 
       // Create member
       const newId = Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
@@ -295,38 +440,38 @@
     // ==================== AUTH FOR DIRECT LINK (with ?id=) ====================
     function showAuthForMember() {
       if (memberInfo.password) {
-        document.getElementById('authTitle').textContent = `Welcome back, ${memberInfo.name}!`;
-        document.getElementById('authSubtitle').textContent = 'Enter your password';
+        document.getElementById('authTitle').textContent = t('welcome_back').replace('{name}', memberInfo.name);
+        document.getElementById('authSubtitle').textContent = t('enter_password');
         document.getElementById('authContent').innerHTML = `
           <div class="form-group">
-            <input type="password" id="directPassword" placeholder="Password" style="text-align:center;">
+            <input type="password" id="directPassword" placeholder="${t('password')}" style="text-align:center;">
           </div>
-          <button class="btn btn-christmas" id="directEnter" style="margin-top:0.5rem;">Enter</button>
+          <button class="btn btn-christmas" id="directEnter" style="margin-top:0.5rem;">${t('enter')}</button>
         `;
         document.getElementById('directEnter').addEventListener('click', () => {
           const pw = document.getElementById('directPassword').value;
           if (pw === memberInfo.password) showDashboard();
-          else showAuthError('Wrong password');
+          else showAuthError(t('err_wrong_pw'));
         });
         document.getElementById('directPassword').addEventListener('keydown', e => {
           if (e.key === 'Enter') document.getElementById('directEnter').click();
         });
       } else {
         // First time via direct link — set password + avatar
-        document.getElementById('authTitle').textContent = `Hi ${memberInfo.name}! 🎄`;
-        document.getElementById('authSubtitle').textContent = 'Set up your account';
+        document.getElementById('authTitle').textContent = t('hi_name').replace('{name}', memberInfo.name);
+        document.getElementById('authSubtitle').textContent = t('setup_account');
         document.getElementById('authContent').innerHTML = `
-          <p style="font-weight:600;margin-bottom:0.5rem;">Pick your avatar:</p>
+          <p style="font-weight:600;margin-bottom:0.5rem;">${t('pick_avatar')}</p>
           <div class="avatar-picker" id="avatarPicker"></div>
           <div class="form-group" style="margin-top:0.5rem;">
-            <input type="password" id="directPassword" placeholder="Create a password" style="text-align:center;">
+            <input type="password" id="directPassword" placeholder="${t('create_pw_placeholder')}" style="text-align:center;">
           </div>
-          <button class="btn btn-christmas" id="directEnter" style="margin-top:0.5rem;">Register</button>
+          <button class="btn btn-christmas" id="directEnter" style="margin-top:0.5rem;">${t('register_btn')}</button>
         `;
         buildAvatarPicker();
         document.getElementById('directEnter').addEventListener('click', () => {
           const pw = document.getElementById('directPassword').value;
-          if (!pw) { showAuthError('Create a password'); return; }
+          if (!pw) { showAuthError(t('err_create_pw')); return; }
           // Save to cloud
           for (const f of cloudData.families) {
             const m = f.members.find(m => m.id === memberId);
@@ -355,7 +500,20 @@
       document.getElementById('memberName').textContent = memberInfo.name;
       document.getElementById('memberFamily').textContent = memberInfo.familyName;
       document.getElementById('memberEmail').textContent = memberInfo.email || 'N/A';
-      document.getElementById('maxGiftsInfo').textContent = `You can add up to ${maxGifts} gifts.`;
+      document.getElementById('maxGiftsInfo').textContent = t('can_add').replace('{n}', maxGifts);
+
+      // Translate static elements
+      document.getElementById('navMyList').textContent = t('my_list');
+      document.getElementById('navMyMatch').textContent = t('my_match');
+      document.getElementById('addGiftText').textContent = t('add_gift');
+      document.getElementById('saveListText').textContent = t('save_list');
+      document.getElementById('budgetLabel').textContent = t('budget_label');
+      document.getElementById('noDrawTitle').textContent = t('no_draw');
+      document.getElementById('noDrawDesc').textContent = t('no_draw_desc');
+      document.getElementById('yourMatchTitle').textContent = t('your_match');
+      document.getElementById('youGotText').textContent = t('you_got');
+      document.getElementById('matchBudgetLabel').textContent = t('budget_label');
+      document.getElementById('theirWishlistTitle').textContent = t('their_wishlist');
 
       if (cloudData.config?.budget) {
         document.getElementById('budgetBanner').style.display = 'block';
@@ -388,31 +546,31 @@
       document.getElementById('addWishItem').classList.toggle('hidden', wishlistItems.length >= maxGifts);
 
       if (!wishlistItems.length) {
-        container.innerHTML = '<p style="color:var(--text-secondary);text-align:center;padding:2rem;">Your list is empty! Add gifts you\'d like to receive 🎄</p>';
+        container.innerHTML = `<p style="color:var(--text-secondary);text-align:center;padding:2rem;">${t('list_empty')}</p>`;
         return;
       }
       container.innerHTML = wishlistItems.map((item, i) => `
         <div class="wish-item">
-          <h4><span>🎁 Gift #${i + 1}</span>
+          <h4><span>${t('gift_n').replace('{n}', i + 1)}</span>
             <button class="btn btn-danger" onclick="removeItem(${i})"><i class="fas fa-trash"></i></button>
           </h4>
-          <div class="form-group"><label>Name/Title:</label>
+          <div class="form-group"><label>${t('gift_title')}</label>
             <input type="text" value="${esc(item.title)}" oninput="updateItem(${i},'title',this.value)"></div>
-          <div class="form-group"><label>Link (URL):</label>
+          <div class="form-group"><label>${t('gift_link')}</label>
             <input type="url" value="${esc(item.link)}" oninput="updateItem(${i},'link',this.value)" placeholder="https://..."></div>
-          <div class="form-group"><label>Image URL:</label>
+          <div class="form-group"><label>${t('gift_image')}</label>
             <input type="url" value="${esc(item.imageUrl)}" oninput="updateItem(${i},'imageUrl',this.value); this.nextElementSibling.src=this.value;" placeholder="https://...">
             <img class="preview-img" src="${esc(item.imageUrl)}" onerror="this.style.display='none'" onload="this.style.display='block'" style="${item.imageUrl ? '' : 'display:none'}"></div>
-          <div class="form-group"><label>Description:</label>
+          <div class="form-group"><label>${t('gift_desc')}</label>
             <textarea oninput="updateItem(${i},'description',this.value)">${esc(item.description)}</textarea></div>
-          <div class="form-group"><label>Notes:</label>
+          <div class="form-group"><label>${t('gift_notes')}</label>
             <textarea oninput="updateItem(${i},'notes',this.value)">${esc(item.notes)}</textarea></div>
         </div>
       `).join('');
     }
 
     function addItem() {
-      if (wishlistItems.length >= maxGifts) { toast(`Max ${maxGifts} gifts`, 'error'); return; }
+      if (wishlistItems.length >= maxGifts) { toast(t('max_gifts').replace('{n}', maxGifts), 'error'); return; }
       wishlistItems.push({ title: '', link: '', imageUrl: '', description: '', notes: '' });
       renderWishlist();
     }
@@ -423,20 +581,20 @@
       const btn = document.getElementById('saveWishlist');
       const status = document.getElementById('saveStatus');
       btn.disabled = true;
-      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+      btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${t('saving')}`;
 
       if (!cloudData.wishlists) cloudData.wishlists = {};
       cloudData.wishlists[memberId] = wishlistItems;
       const ok = await CloudStorage.save(cloudData);
 
       btn.disabled = false;
-      btn.innerHTML = '<i class="fas fa-save"></i> Save My List';
+      btn.innerHTML = `<i class="fas fa-save"></i> ${t('save_list')}`;
       if (ok) {
-        toast('List saved! ✅', 'success');
-        status.innerHTML = '<span style="color:var(--green);"><i class="fas fa-check-circle"></i> Saved</span>';
+        toast(t('saved'), 'success');
+        status.innerHTML = `<span style="color:var(--green);"><i class="fas fa-check-circle"></i> ${t('saved_ok')}</span>`;
       } else {
-        toast('Error saving.', 'error');
-        status.innerHTML = '<span style="color:var(--red);"><i class="fas fa-times-circle"></i> Error</span>';
+        toast(t('save_error'), 'error');
+        status.innerHTML = `<span style="color:var(--red);"><i class="fas fa-times-circle"></i> ${t('saved_fail')}</span>`;
       }
     }
 
@@ -461,7 +619,7 @@
       if (cloudData.sorteoDate) {
         const d = new Date(cloudData.sorteoDate);
         document.getElementById('sorteoDateInfo').innerHTML =
-          `<i class="fas fa-calendar"></i> Draw: ${d.toLocaleDateString()} at ${d.toLocaleTimeString()}`;
+          `<i class="fas fa-calendar"></i> ${t('draw_date')}: ${d.toLocaleDateString()} - ${d.toLocaleTimeString()}`;
       }
       if (cloudData.config?.budget) {
         document.getElementById('matchBudget').style.display = 'block';
@@ -471,14 +629,14 @@
       const items = (cloudData.wishlists?.[receiver.id] || []).filter(w => w.title.trim());
       const container = document.getElementById('matchWishlist');
       if (!items.length) {
-        container.innerHTML = '<p style="color:var(--text-secondary);">No wishlist yet.</p>';
+        container.innerHTML = `<p style="color:var(--text-secondary);">${t('no_wishlist')}</p>`;
         return;
       }
       container.innerHTML = items.map(w => `
         <div class="wish-item" style="border-color:var(--green);">
           <h4 style="color:var(--green);">🎁 ${esc(w.title)}</h4>
           ${w.description ? `<p style="color:var(--text-secondary);">${esc(w.description)}</p>` : ''}
-          ${w.link ? `<p><a href="${esc(w.link)}" target="_blank" style="color:var(--green);"><i class="fas fa-external-link-alt"></i> View link</a></p>` : ''}
+          ${w.link ? `<p><a href="${esc(w.link)}" target="_blank" style="color:var(--green);"><i class="fas fa-external-link-alt"></i> ${t('view_link')}</a></p>` : ''}
           ${w.imageUrl ? `<img class="preview-img" src="${esc(w.imageUrl)}" style="display:block;" onerror="this.style.display='none'">` : ''}
           ${w.notes ? `<p style="color:var(--text-secondary);font-style:italic;font-size:0.85rem;">📝 ${esc(w.notes)}</p>` : ''}
         </div>
@@ -517,7 +675,7 @@
         <div style="text-align:center;">
           <i class="fas fa-exclamation-triangle" style="font-size:3rem;color:var(--red);"></i>
           <h2 style="margin-top:1rem;">${msg}</h2>
-          <p style="color:var(--text-secondary);">Contact the organizer.</p>
+          <p style="color:var(--text-secondary);">${t('contact_organizer')}</p>
         </div>`;
     }
     function showAuthError(msg) {
