@@ -42,7 +42,11 @@ function autoSync() {
   const binId = state.config.npointBinId;
   if (!binId) return;
   clearTimeout(syncTimeout);
+  // Wait 5s after last change before syncing
   syncTimeout = setTimeout(async () => {
+    // Don't sync if user is actively editing
+    const active = document.activeElement;
+    if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA')) return;
     CloudStorage.init(binId);
     // Read-merge-write: preserve participant data (wishlists, passwords)
     const cloud = await CloudStorage.load();
@@ -126,8 +130,12 @@ function showApp() {
   checkSorteoReady();
   bindEvents();
 
-  // Auto-refresh from cloud every 30s
+  // Auto-refresh from cloud every 30s (only if user is not editing)
   setInterval(async () => {
+    // Skip if user is typing in any input/textarea
+    const active = document.activeElement;
+    if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.tagName === 'SELECT')) return;
+
     const binId = state.config.npointBinId;
     if (!binId) return;
     CloudStorage.init(binId);
