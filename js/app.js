@@ -142,7 +142,11 @@ function showApp() {
     const data = await CloudStorage.load();
     if (!data) return;
     const localConfig = { ...state.config };
-    state = { ...defaultState(), ...data };
+    // Merge: cloud brings new registrations, local preserves pending edits
+    state.wishlists = { ...data.wishlists, ...state.wishlists };
+    state.sorteoResult = data.sorteoResult ?? state.sorteoResult;
+    state.sorteoDate = data.sorteoDate ?? state.sorteoDate;
+    state.families = state.families.map(f => { const cf = data.families?.find(x => x.id === f.id); if (!cf) return f; cf.members.forEach(cm => { if (!f.members.find(m => m.id === cm.id)) f.members.push(cm); }); f.members = f.members.map(m => { const cm = cf.members.find(x => x.id === m.id); return cm ? { ...m, password: cm.password || m.password, avatar: cm.avatar || m.avatar } : m; }); return f; });
     state.config.npointBinId = localConfig.npointBinId;
     state.config.adminPin = localConfig.adminPin;
     state.config.emailjsPublicKey = localConfig.emailjsPublicKey;
@@ -915,7 +919,11 @@ async function syncFromCloud() {
 
   // Merge: keep local config keys (emailjs, npoint), overwrite the rest
   const localConfig = { ...state.config };
-  state = { ...defaultState(), ...data };
+  // Merge: cloud brings new registrations, local preserves pending edits
+    state.wishlists = { ...data.wishlists, ...state.wishlists };
+    state.sorteoResult = data.sorteoResult ?? state.sorteoResult;
+    state.sorteoDate = data.sorteoDate ?? state.sorteoDate;
+    state.families = state.families.map(f => { const cf = data.families?.find(x => x.id === f.id); if (!cf) return f; cf.members.forEach(cm => { if (!f.members.find(m => m.id === cm.id)) f.members.push(cm); }); f.members = f.members.map(m => { const cm = cf.members.find(x => x.id === m.id); return cm ? { ...m, password: cm.password || m.password, avatar: cm.avatar || m.avatar } : m; }); return f; });
   state.config.npointBinId = localConfig.npointBinId;
   state.config.emailjsPublicKey = localConfig.emailjsPublicKey;
   state.config.emailjsServiceId = localConfig.emailjsServiceId;
