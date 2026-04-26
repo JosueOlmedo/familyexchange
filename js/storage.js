@@ -1,10 +1,13 @@
 // ==================== CLOUD STORAGE (npoint.io) ====================
-// npoint.io: Free JSON storage, no signup, REST API
-// Create a bin at https://www.npoint.io/ and paste the ID here
+// Optimistic locking: each write increments _version.
+// Before writing, we check if _version matches what we last read.
+// If not, we re-read, merge, and retry.
 
 const CloudStorage = {
   binId: null,
   baseUrl: 'https://api.npoint.io',
+  lastVersion: null,
+  busy: false, // Prevents concurrent writes
 
   init(binId) {
     this.binId = binId;
@@ -19,14 +22,16 @@ const CloudStorage = {
     try {
       const res = await fetch(`${this.baseUrl}/${this.binId}`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      return await res.json();
+      const data = await res.json();
+      this.lastVersion = data._version || 0;
+      return data;
     } catch (e) {
       console.error('CloudStorage load error:', e);
       return null;
     }
   },
 
-  async save(data) {
+  async _rawSave(data) {
     if (!this.binId) return false;
     try {
       const res = await fetch(`${this.baseUrl}/${this.binId}`, {
@@ -41,40 +46,73 @@ const CloudStorage = {
     }
   },
 
-  // Save only a member's wishlist (read-merge-write to avoid overwriting other data)
-  async saveWishlist(memberId, items) {
-    if (!this.binId) return false;
+  // Safe save with optimistic lock: read → check version → merge → write
+  // mergeFn(cloudData) should return the merged data to save
+  async safeSave(mergeFn, retries = 3) {
+    if (this.busy) return false;
+    this.busy = true;
+
     try {
-      const data = await this.load();
-      if (!data) return false;
-      if (!data.wishlists) data.wishlists = {};
-      data.wishlists[memberId] = items;
-      return await this.save(data);
+      for (let i = 0; i < retries; i++) {
+        const cloud = await this.load();
+        if (!cloud) { this.busy = false; return false; }
+
+        const merged = mergeFn(cloud);
+        merged._version = (cloud._version || 0) + 1;
+
+        // Try to save
+        const ok = await this._rawSave(merged);
+        if (!ok) { this.busy = false; return false; }
+
+        // Verify our version stuck (re-read and check)
+        const verify = await this.load();
+        if (verify && verify._version === merged._version) {
+          this.lastVersion = merged._version;
+          this.busy = false;
+          return true;
+        }
+
+        // Someone else wrote between our save and verify — retry
+        console.warn(`CloudStorage: version conflict, retry ${i + 1}/${retries}`);
+        await new Promise(r => setTimeout(r, 500 + Math.random() * 1000));
+      }
+
+      this.busy = false;
+      return false;
     } catch (e) {
-      console.error('CloudStorage saveWishlist error:', e);
+      console.error('CloudStorage safeSave error:', e);
+      this.busy = false;
       return false;
     }
   },
 
-  // Save only a member's registration (read-merge-write)
+  // Full overwrite (admin only — use with caution)
+  async save(data) {
+    return this.safeSave(() => ({ ...data }));
+  },
+
+  // Save only a member's wishlist
+  async saveWishlist(memberId, items) {
+    return this.safeSave((cloud) => {
+      if (!cloud.wishlists) cloud.wishlists = {};
+      cloud.wishlists[memberId] = items;
+      return cloud;
+    });
+  },
+
+  // Save/update a member in a family
   async saveMember(familyId, member) {
-    if (!this.binId) return false;
-    try {
-      const data = await this.load();
-      if (!data) return false;
-      const family = (data.families || []).find(f => f.id === familyId);
-      if (!family) return false;
+    return this.safeSave((cloud) => {
+      const family = (cloud.families || []).find(f => f.id === familyId);
+      if (!family) return cloud;
       const idx = family.members.findIndex(m => m.id === member.id);
       if (idx >= 0) {
         family.members[idx] = { ...family.members[idx], ...member };
       } else {
         family.members.push(member);
       }
-      return await this.save(data);
-    } catch (e) {
-      console.error('CloudStorage saveMember error:', e);
-      return false;
-    }
+      return cloud;
+    });
   },
 
   async loadWishlist(memberId) {

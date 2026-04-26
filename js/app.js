@@ -78,7 +78,7 @@ function autoSync() {
         }
       });
     }
-    const ok = await CloudStorage.save(merged);
+    const ok = await CloudStorage.safeSave((cloud) => { const m={...cloud,...merged}; m.wishlists={...(cloud.wishlists||{}),...merged.wishlists}; return m; });
     if (ok) console.log('Auto-synced to cloud (merged)');
   }, 2000);
 }
@@ -899,7 +899,7 @@ async function syncToCloud() {
 
   CloudStorage.init(binId);
   toast('⏳ Uploading...', 'info');
-  const ok = await CloudStorage.save(state);
+  const ok = await CloudStorage.safeSave((cloud) => ({...cloud,...state,wishlists:{...(cloud.wishlists||{}),...state.wishlists}}));
   toast(ok ? '✅ Uploaded to cloud' : '❌ Upload failed', ok ? 'success' : 'error');
 }
 
