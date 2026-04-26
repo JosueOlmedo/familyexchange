@@ -403,7 +403,7 @@
       document.getElementById('backToLanding2').addEventListener('click', (e) => { e.preventDefault(); showLanding(); });
     }
 
-    function handleRegister() {
+    async function handleRegister() {
       const familyId = document.getElementById('regFamily').value;
       const name = document.getElementById('regName').value.trim();
       const email = document.getElementById('regEmail').value.trim();
@@ -428,7 +428,8 @@
         avatar: selectedAvatar || '🎅'
       };
       family.members.push(newMember);
-      CloudStorage.saveMember(family.id, newMember);
+      const saved = await CloudStorage.saveMember(family.id, newMember);
+      if (!saved) { showAuthError(t('save_error')); family.members.pop(); return; }
 
       memberId = newId;
       memberInfo = { ...newMember, familyId: family.id, familyName: family.name };
