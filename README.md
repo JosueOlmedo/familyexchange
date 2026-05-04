@@ -8,175 +8,91 @@ Aplicación web para organizar intercambios de regalos navideños entre familias
 
 ```
 Intercambios familiares/
-├── index.html          ← Panel de administración (página principal)
+├── index.html          ← Panel de administración
 ├── my-list.html        ← Portal del participante (registro/login/wishlist/resultado)
 ├── css/
 │   └── styles.css      ← Estilos con dark/light mode y tema navideño
 ├── js/
 │   ├── app.js          ← Lógica principal del admin ✅
-│   ├── i18n.js         ← Traducciones español/inglés (admin) ✅
-│   └── storage.js      ← Módulo de almacenamiento en la nube (npoint.io) ✅
-├── assets/             ← Carpeta para recursos estáticos
+│   ├── i18n.js         ← Traducciones español/inglés ✅
+│   └── storage.js      ← Módulo Firebase Realtime Database ✅
+├── assets/             ← Recursos estáticos
 ├── README.md           ← Este archivo
-└── CHANGELOG.md        ← Historial de cambios
+├── CHANGELOG.md        ← Historial de cambios
+└── FLOW-DIAGRAM.md     ← Diagrama de flujo y análisis de vulnerabilidades
 ```
+
+---
+
+## 🔗 URLs
+
+| Página | URL | Quién la usa |
+|--------|-----|-------------|
+| Admin | https://josueolmedo.github.io/familyexchange/ | Solo el organizador |
+| Participantes | https://josueolmedo.github.io/familyexchange/my-list.html | Todos los familiares |
 
 ---
 
 ## 🚀 Funcionalidades
 
-### Implementadas ✅
-| # | Funcionalidad | Archivo(s) | Estado |
-|---|--------------|------------|--------|
-| 1 | Gestión de familias/grupos | index.html, app.js | ✅ |
-| 2 | Gestión de integrantes (nombre + correo) | index.html, app.js | ✅ |
-| 3 | Listas de deseos (título, enlace, imagen, descripción, notas) | index.html, app.js | ✅ |
-| 4 | Máximo de regalos configurable | index.html, app.js | ✅ |
-| 5 | Sorteo con restricción familiar | app.js | ✅ |
-| 6 | Animación de ruleta en el sorteo | app.js, styles.css | ✅ |
-| 7 | Envío de correos con EmailJS (HTML i18n) | app.js | ✅ |
-| 8 | Modal de confirmación post-sorteo | index.html, app.js | ✅ |
-| 9 | Persistencia en localStorage | app.js | ✅ |
-| 10 | Copos de nieve animados (dark + light mode) | app.js, styles.css | ✅ |
-| 11 | Dark/light mode toggle | styles.css, app.js | ✅ |
-| 12 | Traducciones ES/EN (admin) | i18n.js, app.js | ✅ |
-| 13 | Traducciones ES/EN (participante) | my-list.html | ✅ |
-| 14 | Cloud storage con npoint.io | storage.js, app.js | ✅ |
-| 15 | Auto-sync a la nube (debounce 2s) | app.js | ✅ |
-| 16 | Auto-refresh desde la nube (cada 30s) | app.js | ✅ |
-| 17 | Pantalla de registro admin con emojis navideños | index.html, app.js | ✅ |
-| 18 | User badge (emoji + nombre en header) | index.html, app.js | ✅ |
-| 19 | PIN de administrador | index.html, app.js | ✅ |
-| 20 | Portal del participante (registro/login/wishlist/resultado) | my-list.html | ✅ |
-| 21 | Auto-registro de participantes (enlace base compartido) | my-list.html | ✅ |
-| 22 | Contraseña por participante | my-list.html | ✅ |
-| 23 | Reset de contraseña desde admin (botón 🔑) | app.js | ✅ |
-| 24 | Logout en portal del participante | my-list.html | ✅ |
-| 25 | Ver resultado del sorteo + fecha/hora | my-list.html, app.js | ✅ |
-| 26 | Validación pre-sorteo (sin correo + sin lista) | app.js | ✅ |
-| 27 | Correos compartidos (hijos con correo del padre) | app.js | ✅ |
-| 28 | Validación de nombres duplicados por familia | app.js | ✅ |
-| 29 | URLs individuales con botón copiar | app.js | ✅ |
-| 30 | Exportar a Excel (SheetJS) | app.js | ✅ |
-| 31 | Email HTML navideño bilingüe (subject + body) | app.js, i18n.js | ✅ |
-| 32 | npoint Bin ID en configuración (auto-strip URL) | app.js | ✅ |
-| 33 | Deploy a GitHub Pages | - | ✅ |
+### Admin (index.html)
+- Registro con emojis navideños como avatar
+- PIN de administrador
+- Dark/light mode + ES/EN toggle
+- CRUD de familias e integrantes
+- Reset de contraseña por integrante (🔑)
+- Listas de deseos por persona
+- URLs individuales con botón copiar
+- Sorteo con ruleta animada + restricción familiar
+- Validación pre-sorteo (sin correo / sin lista)
+- Email HTML navideño bilingüe (EmailJS)
+- Exportar a Excel (participantes, wishlists, sorteo)
+- Auto-refresh desde Firebase cada 30s
+- Link directo a página de participantes
 
-### Pendientes 🔧
-| # | Funcionalidad | Prioridad |
-|---|--------------|-----------|
-| A | Pulido UI/UX | 🟢 Baja |
-| B | Testing end-to-end | 🟢 Baja |
+### Participante (my-list.html)
+- Enlace base compartido (sin parámetros necesarios)
+- Landing: "Ya me registré" / "Registrarme" + toggle ES/EN
+- Auto-registro: seleccionar familia → nombre → correo → emoji → contraseña
+- Login con nombre + contraseña
+- Dark/light mode + ES/EN en dashboard
+- Edición de wishlist con guardado directo a Firebase
+- Post-sorteo: ver persona asignada + su wishlist + fecha/hora
+- Logout
 
 ---
 
 ## 🏗️ Arquitectura
 
-### Flujo del Admin (index.html)
+### Almacenamiento
+- **Firebase Realtime Database**: Todos los datos (familias, wishlists, config, sorteo)
+  - Operaciones atómicas por path (no overwrite total)
+  - `/exchange/config` — configuración
+  - `/exchange/families` — familias e integrantes
+  - `/exchange/wishlists/{memberId}` — wishlist por persona
+  - `/exchange/sorteoResult` — resultado del sorteo
+  - `/exchange/sorteoDate` — fecha del sorteo
+- **localStorage**: Solo sesión admin (nombre+avatar) y preferencias (tema, idioma)
+
+### Flujo del Admin
 ```
 Registro (nombre + emoji) → PIN (si configurado)
     ↓
-Header (emoji + nombre + dark mode + idioma)
+Header (emoji + nombre + dark mode + idioma + link participante)
     ↓
-┌─────────────┬──────────────┬──────────────┬──────────────┬──────────────┐
-│   Config    │  Familias    │   Listas     │   Sorteo     │  Exportar    │
-│             │              │              │              │              │
-│ - Max gifts │ - CRUD       │ - Por persona│ - Validación │ - Excel      │
-│ - Evento    │   familias   │ - Hasta N    │   (correo +  │   participan │
-│ - Budget    │ - CRUD       │   regalos    │   wishlist)  │   tes        │
-│ - Admin PIN │   miembros   │ - URLs indiv │ - Ruleta     │ - Excel      │
-│ - npoint ID │ - Reset 🔑   │ - Cloud sync │ - Restricción│   wishlists  │
-│ - EmailJS   │   password   │              │   familiar   │ - Excel      │
-│ - Cloud     │              │              │ - Modal      │   sorteo     │
-│   sync      │              │              │ - Email HTML │              │
-│ - Auto-sync │              │              │   bilingüe   │              │
-│   (2s)      │              │              │              │              │
-│ - Auto-     │              │              │              │              │
-│   refresh   │              │              │              │              │
-│   (30s)     │              │              │              │              │
-└─────────────┴──────────────┴──────────────┴──────────────┴──────────────┘
+Config → Familias → Listas → Sorteo → Exportar
 ```
 
-### Flujo del Participante (my-list.html)
+### Flujo del Participante
 ```
-Enlace base: my-list.html?bin=NPOINT_BIN_ID
+my-list.html (enlace base)
     ↓
-┌─────────────────────────────────────┐
-│  Landing: "Ya me registré" / "Registrarme"  │
-│  + Toggle ES/EN                              │
-└──────────────┬──────────────────────┘
-               ↓
-┌──────────────┴──────────────┐
-│  Registro:                   │  Login:
-│  - Seleccionar familia       │  - Seleccionar nombre
-│  - Nombre, correo            │  - Contraseña
-│  - Emoji avatar              │
-│  - Contraseña                │
-└──────────────┬──────────────┘
-               ↓
-┌──────────────┴──────────────┐
-│  Dashboard:                  │
-│  - Mi Lista (editar wishlist)│
-│  - Mi Amigo (post-sorteo)    │
-│    → Nombre + familia        │
-│    → Fecha/hora del sorteo   │
-│    → Presupuesto             │
-│    → Wishlist de esa persona │
-│  - Logout                    │
-└──────────────────────────────┘
-```
-
-### Almacenamiento
-- **localStorage**: Datos del admin (familias, wishlists, config, sorteo, sesión)
-- **npoint.io**: Sincronización en la nube (auto-sync cada 2s, auto-refresh cada 30s)
-  - Admin sube cambios automáticamente
-  - Participantes leen/escriben directamente a la nube
-
-### Estructura del State
-```json
-{
-  "config": {
-    "maxGifts": 5,
-    "eventName": "Intercambio Navidad 2025",
-    "budget": "$500 MXN",
-    "adminPin": "1234",
-    "npointBinId": "8fcbc26bcaa818cd20bb",
-    "senderEmail": "",
-    "emailjsPublicKey": "",
-    "emailjsServiceId": "",
-    "emailjsTemplateId": ""
-  },
-  "families": [
-    {
-      "id": "abc123",
-      "name": "Familia Olmedo",
-      "members": [
-        {
-          "id": "m1",
-          "name": "Josué",
-          "email": "josue@mail.com",
-          "password": "hashed",
-          "avatar": "🎅"
-        }
-      ]
-    }
-  ],
-  "wishlists": {
-    "m1": [
-      {
-        "title": "Audífonos Bluetooth",
-        "link": "https://...",
-        "imageUrl": "https://...",
-        "description": "Color negro, over-ear",
-        "notes": "Marca Sony preferiblemente"
-      }
-    ]
-  },
-  "sorteoResult": [
-    { "giverId": "m1", "receiverId": "m5" }
-  ],
-  "sorteoDate": "2025-11-15T20:30:00.000Z"
-}
+"Ya me registré" / "Registrarme" + ES/EN
+    ↓
+Registro: familia → nombre → correo → emoji → contraseña
+Login: nombre → contraseña
+    ↓
+Dashboard: Mi Lista | Mi Amigo + Logout + Dark/Light + ES/EN
 ```
 
 ---
@@ -186,65 +102,49 @@ Enlace base: my-list.html?bin=NPOINT_BIN_ID
 | Tecnología | Uso |
 |-----------|-----|
 | HTML/CSS/JS vanilla | Frontend sin frameworks |
-| Emoji avatars | Avatares navideños sin dependencias externas |
-| [npoint.io](https://www.npoint.io/) | JSON storage gratuito (cloud sync) |
-| [EmailJS](https://www.emailjs.com/) | Envío de correos HTML desde el navegador (200/mes gratis) |
+| [Firebase Realtime Database](https://firebase.google.com/) | Base de datos en la nube (gratis) |
+| [EmailJS](https://www.emailjs.com/) | Envío de correos HTML (200/mes gratis) |
 | [SheetJS (XLSX)](https://sheetjs.com/) | Exportación a Excel |
 | [Font Awesome 6](https://fontawesome.com/) | Iconos |
 | [Google Fonts](https://fonts.google.com/) | Mountains of Christmas + Nunito |
-| localStorage | Persistencia local del admin |
+| Emoji avatars | Sin dependencias externas |
 
 ---
 
 ## 📦 Despliegue
 
 ### GitHub Pages (Actual) ✅
-- **Admin**: https://josueolmedo.github.io/familyexchange/
-- **Participantes**: https://josueolmedo.github.io/familyexchange/my-list.html?bin=BIN_ID
 - Se actualiza automáticamente con cada `git push`
-
-### Cómo actualizar
-```bash
-git add . && git commit -m "descripción" && git push
-```
+- `git add . && git commit -m "descripción" && git push`
 
 ---
 
 ## ⚙️ Configuración Inicial
 
-1. **Crear bin en npoint.io**:
-   - Ir a https://www.npoint.io/
-   - Pegar `{}` como contenido → Save
-   - Copiar solo el ID del bin (no la URL completa)
+1. **Firebase** (ya configurado):
+   - Proyecto: `familiexchange`
+   - Database URL: `https://familiexchange-default-rtdb.firebaseio.com`
 
-2. **Configurar EmailJS** (para envío de correos):
-   - Crear cuenta en https://www.emailjs.com/
-   - Conectar servicio de correo
-   - Crear template con variables (3 llaves):
-     - Subject: `{{{email_subject}}}`
-     - Body: `{{{email_body}}}`
-     - To: `{{to_email}}`
-   - Copiar Public Key, Service ID, Template ID
+2. **EmailJS** (para envío de correos):
+   - Template con 3 llaves: Subject `{{{email_subject}}}`, Body `{{{email_body}}}`, To `{{to_email}}`
 
-3. **Abrir index.html** → Config → llenar todo → Guardar
+3. **Abrir admin** → Config → llenar EmailJS + PIN → Guardar
 
-4. **Crear familias** (vacías) → los participantes se auto-registran
-
-5. **Compartir enlace base** en el chat familiar:
-   `https://josueolmedo.github.io/familyexchange/my-list.html?bin=TU_BIN_ID`
+4. **Crear familias** (vacías) → compartir enlace base en el chat familiar
 
 ---
 
 ## 🔐 Seguridad
 
-- **Admin**: Protegido con PIN configurable
-- **Participantes**: Cada uno tiene su contraseña
-- **Reset de contraseña**: El admin puede resetear desde la pestaña Familias (botón 🔑)
-- **Nota**: Las contraseñas se almacenan en texto plano en npoint.io. Esto es aceptable para un intercambio familiar pero no para datos sensibles.
+- Admin protegido con PIN
+- Cada participante tiene contraseña
+- Reset de contraseña desde admin (🔑)
+- Firebase en test mode (aceptable para uso familiar)
+- Contraseñas en texto plano (aceptable para intercambio familiar)
 
 ---
 
 ## 🎯 Próximos Pasos
 
-1. 🟢 **Testing** end-to-end de todos los flujos
-2. 🟢 **Pulido** de UI/UX si se detectan detalles
+1. 🟢 Testing end-to-end
+2. 🟢 Pulido UI/UX
