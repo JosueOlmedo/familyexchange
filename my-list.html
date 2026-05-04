@@ -31,6 +31,8 @@
           <span id="userAvatar" style="font-size:1.5rem;"></span>
           <span id="userName"></span>
         </div>
+        <button class="theme-toggle" id="themeToggle" title="Dark/Light" onclick="const n=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';document.documentElement.setAttribute('data-theme',n);localStorage.setItem('intercambio_theme',n);this.innerHTML=n==='dark'?'<i class=\'fas fa-sun\'></i>':'<i class=\'fas fa-moon\'></i>';"><i class="fas fa-moon"></i></button>
+        <button class="lang-toggle" id="headerLangToggle" onclick="toggleLang();showDashboard();" style="font-size:0.8rem;font-weight:700;">ES</button>
         <button class="theme-toggle" id="logoutBtn" title="Logout"><i class="fas fa-sign-out-alt"></i></button>
       </div>
     </div>

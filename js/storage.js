@@ -21,17 +21,33 @@ const CloudStorage = {
     return true;
   },
 
-  // Read entire state
+  // Read entire state (converts Firebase objects back to arrays)
   async load() {
     try {
       const res = await fetch(`${this.dbUrl}/exchange.json`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
-      return data || {};
+      if (!data) return {};
+      // Firebase stores arrays as objects with numeric keys — convert back
+      if (data.families) data.families = this._toArray(data.families).map(f => ({ ...f, members: this._toArray(f.members || {}) }));
+      if (data.wishlists) {
+        for (const key in data.wishlists) {
+          data.wishlists[key] = this._toArray(data.wishlists[key]);
+        }
+      }
+      if (data.sorteoResult) data.sorteoResult = this._toArray(data.sorteoResult);
+      return data;
     } catch (e) {
       console.error('Firebase load error:', e);
       return null;
     }
+  },
+
+  // Convert Firebase object {0:{...},1:{...}} to array [{...},{...}]
+  _toArray(obj) {
+    if (Array.isArray(obj)) return obj;
+    if (!obj || typeof obj !== 'object') return [];
+    return Object.keys(obj).sort((a,b) => a-b).map(k => obj[k]).filter(Boolean);
   },
 
   // Write entire state (admin full sync)
