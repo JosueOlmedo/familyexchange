@@ -563,7 +563,7 @@
           <div class="form-group"><label>${t('gift_title')}</label>
             <input type="text" value="${esc(item.title)}" oninput="updateItem(${i},'title',this.value)"></div>
           <div class="form-group"><label>${t('gift_link')}</label>
-            <input type="url" value="${esc(item.link)}" oninput="updateItem(${i},'link',this.value)" placeholder="https://..."></div>
+            <input type="url" value="${esc(item.link)}" oninput="updateItem(${i},'link',this.value)" placeholder="https://...">${item.link?`<a href="${esc(item.link)}" target="_blank" style="color:var(--green);font-size:0.85rem;margin-top:4px;display:inline-block;"><i class="fas fa-external-link-alt"></i> ${t('view_link')}</a>`:''}</div>
           <div class="form-group"><label>${t('gift_image')}</label>
             <input type="url" value="${esc(item.imageUrl)}" oninput="updateItem(${i},'imageUrl',this.value); this.nextElementSibling.src=this.value;" placeholder="https://...">
             <img class="preview-img" src="${esc(item.imageUrl)}" onerror="this.style.display='none'" onload="this.style.display='block'" style="${item.imageUrl ? '' : 'display:none'}"></div>
