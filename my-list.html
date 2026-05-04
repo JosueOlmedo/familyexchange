@@ -97,7 +97,7 @@
     // ==================== CONFIG ====================
     const AVATARS = ['🎅','🤶','🧑🎄','⛄','🦌','🎄','🐧','🎁','⭐','🔔','❄️','🍪'];
     const params = new URLSearchParams(window.location.search);
-    let binId = params.get('bin');
+    // Firebase: no bin needed
     let memberId = params.get('id');
     let cloudData = null;
     let memberInfo = null;
@@ -256,9 +256,8 @@
       createSnowflakes();
       initTheme();
 
-      if (!binId) { showError(t('err_invalid')); return; }
+      // Firebase: always connected
 
-      CloudStorage.init(binId);
       cloudData = await CloudStorage.load();
       if (!cloudData || !cloudData.families) { showError(t('err_no_data')); return; }
 

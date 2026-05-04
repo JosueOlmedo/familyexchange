@@ -1,122 +1,173 @@
-// ==================== CLOUD STORAGE (npoint.io) ====================
-// Optimistic locking: each write increments _version.
-// Before writing, we check if _version matches what we last read.
-// If not, we re-read, merge, and retry.
+// ==================== FIREBASE STORAGE ====================
+// Atomic operations per path — no more full-file overwrites
+// Each write only touches its specific path in the database
+
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyC94_jxcbZCPxNayFitDZWwKTY6TCRC5dQ",
+  authDomain: "familiexchange.firebaseapp.com",
+  databaseURL: "https://familiexchange-default-rtdb.firebaseio.com",
+  projectId: "familiexchange"
+};
 
 const CloudStorage = {
-  binId: null,
-  baseUrl: 'https://api.npoint.io',
-  lastVersion: null,
-  busy: false, // Prevents concurrent writes
+  dbUrl: FIREBASE_CONFIG.databaseURL,
+  ready: true,
 
-  init(binId) {
-    this.binId = binId;
+  init() {
+    // No-op: Firebase URL is hardcoded
   },
 
   isConfigured() {
-    return !!this.binId;
+    return true;
   },
 
+  // Read entire state
   async load() {
-    if (!this.binId) return null;
     try {
-      const res = await fetch(`${this.baseUrl}/${this.binId}`);
+      const res = await fetch(`${this.dbUrl}/exchange.json`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
-      this.lastVersion = data._version || 0;
-      return data;
+      return data || {};
     } catch (e) {
-      console.error('CloudStorage load error:', e);
+      console.error('Firebase load error:', e);
       return null;
     }
   },
 
-  async _rawSave(data) {
-    if (!this.binId) return false;
+  // Write entire state (admin full sync)
+  async save(data) {
     try {
-      const res = await fetch(`${this.baseUrl}/${this.binId}`, {
-        method: 'POST',
+      const res = await fetch(`${this.dbUrl}/exchange.json`, {
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
       });
       return res.ok;
     } catch (e) {
-      console.error('CloudStorage save error:', e);
+      console.error('Firebase save error:', e);
       return false;
     }
   },
 
-  // Safe save with optimistic lock: read → check version → merge → write
-  // mergeFn(cloudData) should return the merged data to save
-  async safeSave(mergeFn, retries = 3) {
-    if (this.busy) return false;
-    this.busy = true;
-
+  // ATOMIC: Save only config
+  async saveConfig(config) {
     try {
-      for (let i = 0; i < retries; i++) {
-        const cloud = await this.load();
-        if (!cloud) { this.busy = false; return false; }
-
-        const merged = mergeFn(cloud);
-        merged._version = (cloud._version || 0) + 1;
-
-        // Try to save
-        const ok = await this._rawSave(merged);
-        if (!ok) { this.busy = false; return false; }
-
-        // Verify our version stuck (re-read and check)
-        const verify = await this.load();
-        if (verify && verify._version === merged._version) {
-          this.lastVersion = merged._version;
-          this.busy = false;
-          return true;
-        }
-
-        // Someone else wrote between our save and verify — retry
-        console.warn(`CloudStorage: version conflict, retry ${i + 1}/${retries}`);
-        await new Promise(r => setTimeout(r, 500 + Math.random() * 1000));
-      }
-
-      this.busy = false;
-      return false;
+      const res = await fetch(`${this.dbUrl}/exchange/config.json`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(config)
+      });
+      return res.ok;
     } catch (e) {
-      console.error('CloudStorage safeSave error:', e);
-      this.busy = false;
+      console.error('Firebase saveConfig error:', e);
       return false;
     }
   },
 
-  // Full overwrite (admin only — use with caution)
-  async save(data) {
-    return this.safeSave(() => ({ ...data }));
+  // ATOMIC: Save only families array
+  async saveFamilies(families) {
+    try {
+      const res = await fetch(`${this.dbUrl}/exchange/families.json`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(families)
+      });
+      return res.ok;
+    } catch (e) {
+      console.error('Firebase saveFamilies error:', e);
+      return false;
+    }
   },
 
-  // Save only a member's wishlist
+  // ATOMIC: Save only one member's wishlist
   async saveWishlist(memberId, items) {
-    return this.safeSave((cloud) => {
-      if (!cloud.wishlists) cloud.wishlists = {};
-      cloud.wishlists[memberId] = items;
-      return cloud;
-    });
+    try {
+      const res = await fetch(`${this.dbUrl}/exchange/wishlists/${memberId}.json`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(items)
+      });
+      return res.ok;
+    } catch (e) {
+      console.error('Firebase saveWishlist error:', e);
+      return false;
+    }
   },
 
-  // Save/update a member in a family
+  // ATOMIC: Save/update a member in a family (read-modify-write on families only)
   async saveMember(familyId, member) {
-    return this.safeSave((cloud) => {
-      const family = (cloud.families || []).find(f => f.id === familyId);
-      if (!family) return cloud;
+    try {
+      // Read current families
+      const res = await fetch(`${this.dbUrl}/exchange/families.json`);
+      if (!res.ok) return false;
+      const families = await res.json() || [];
+
+      const family = families.find(f => f.id === familyId);
+      if (!family) return false;
+
       const idx = family.members.findIndex(m => m.id === member.id);
       if (idx >= 0) {
         family.members[idx] = { ...family.members[idx], ...member };
       } else {
         family.members.push(member);
       }
-      return cloud;
-    });
+
+      return await this.saveFamilies(families);
+    } catch (e) {
+      console.error('Firebase saveMember error:', e);
+      return false;
+    }
   },
 
-  async loadWishlist(memberId) {
-    const data = await this.load();
-    return data?.wishlists?.[memberId] || [];
+  // ATOMIC: Save sorteo result + date
+  async saveSorteo(result, date) {
+    try {
+      const res = await fetch(`${this.dbUrl}/exchange/sorteoResult.json`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(result)
+      });
+      const res2 = await fetch(`${this.dbUrl}/exchange/sorteoDate.json`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(date)
+      });
+      return res.ok && res2.ok;
+    } catch (e) {
+      console.error('Firebase saveSorteo error:', e);
+      return false;
+    }
+  },
+
+  // ATOMIC: Clear sorteo
+  async clearSorteo() {
+    try {
+      await fetch(`${this.dbUrl}/exchange/sorteoResult.json`, { method: 'DELETE' });
+      await fetch(`${this.dbUrl}/exchange/sorteoDate.json`, { method: 'DELETE' });
+      return true;
+    } catch (e) {
+      console.error('Firebase clearSorteo error:', e);
+      return false;
+    }
+  },
+
+  // Read only wishlists
+  async loadWishlists() {
+    try {
+      const res = await fetch(`${this.dbUrl}/exchange/wishlists.json`);
+      return (await res.json()) || {};
+    } catch (e) {
+      return {};
+    }
+  },
+
+  // Read only families
+  async loadFamilies() {
+    try {
+      const res = await fetch(`${this.dbUrl}/exchange/families.json`);
+      return (await res.json()) || [];
+    } catch (e) {
+      return [];
+    }
   }
 };
