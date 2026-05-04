@@ -137,7 +137,7 @@ function initNavigation() {
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
     document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
     btn.classList.add('active'); document.getElementById(btn.dataset.section).classList.add('active');
-    if (btn.dataset.section === 'wishlists') { populateWishlistSelect(); renderMemberUrls(); }
+    if (btn.dataset.section === 'wishlists') { populateWishlistSelect(); renderAllWishlists(); renderMemberUrls(); }
     if (btn.dataset.section === 'sorteo') checkSorteoReady();
   }));
   applyTranslations();
@@ -246,6 +246,27 @@ async function saveWishlist() {
   const id = document.getElementById('wishlistPerson').value;
   if (id && state.wishlists[id]) await CloudStorage.saveWishlist(id, state.wishlists[id]);
   toast(i18n.t('wishlists_saved'), 'success');
+}
+
+// ==================== ALL WISHLISTS OVERVIEW ====================
+function renderAllWishlists() {
+  const c = document.getElementById('allWishlistsView'), members = getAllMembers();
+  if (!members.length) { c.innerHTML = '<p style="color:var(--text-secondary);">No members yet.</p>'; return; }
+  c.innerHTML = members.map(m => {
+    const items = state.wishlists[m.id] || [];
+    const badge = items.length ? `<span style="color:var(--green);">(${items.length})</span>` : '<span style="color:var(--gold);">(0)</span>';
+    const list = items.filter(w => w.title?.trim()).map(w =>
+      `<div style="padding:4px 0;border-bottom:1px solid var(--border-color);font-size:0.9rem;">` +
+      `<strong>${esc(w.title)}</strong>` +
+      (w.description ? ` <span style="color:var(--text-secondary);">- ${esc(w.description)}</span>` : '') +
+      (w.link ? ` <a href="${esc(w.link)}" target="_blank" style="color:var(--green);"><i class="fas fa-external-link-alt"></i></a>` : '') +
+      (w.notes ? ` <em style="color:var(--text-secondary);font-size:0.8rem;">(${esc(w.notes)})</em>` : '') +
+      `</div>`
+    ).join('') || '<p style="color:var(--text-secondary);font-size:0.85rem;">No gifts yet</p>';
+    return `<div style="margin-bottom:1rem;padding:0.8rem;background:var(--bg-card-alt);border-radius:10px;border-left:4px solid ${items.length ? 'var(--green)' : 'var(--gold)'};">` +
+      `<h4 style="margin-bottom:0.5rem;">${esc(m.name)} ${badge} <span style="color:var(--text-secondary);font-size:0.8rem;">- ${esc(m.familyName)}</span></h4>` +
+      list + `</div>`;
+  }).join('');
 }
 
 // ==================== MEMBER URLs ====================
