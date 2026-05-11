@@ -338,7 +338,7 @@ function buildEmailHtml(gn,rn,wt,en,b){return`<div style="font-family:'Segoe UI'
 async function sendEmails() {
   const{emailjsPublicKey,emailjsServiceId,emailjsTemplateId,eventName,budget}=state.config;
   if(!emailjsPublicKey||!emailjsServiceId||!emailjsTemplateId){toast(i18n.t('sorteo_configure_email'),'error');toggleModal(false);return;}
-  if(!state.sorteoResult){toggleModal(false);return;}
+  if(!state.sorteoResult){toggleModal(false);return;}if(state.emailsSent){if(!confirm(i18n.current==='es'?'Los correos ya fueron enviados. Â¿Enviar de nuevo?':'Emails were already sent. Send again?')){toggleModal(false);return;}}
   try{emailjs.init(emailjsPublicKey);}catch(e){toast('EmailJS error','error');toggleModal(false);return;}
   const members=getAllMembers(),map=Object.fromEntries(members.map(m=>[m.id,m])),btn=document.getElementById('modalSendEmail');
   btn.disabled=true;btn.innerHTML=`<i class="fas fa-spinner fa-spin"></i> ${i18n.t('sorteo_sending')}`;
@@ -347,7 +347,7 @@ async function sendEmails() {
     const wt=(state.wishlists[rv.id]||[]).filter(w=>w.title?.trim()).map((w,i)=>{let l=`${i+1}. ${w.title}`;if(w.description)l+=` - ${w.description}`;if(w.link)l+=` | ${w.link}`;if(w.notes)l+=` | ${w.notes}`;return l;}).join('\n')||i18n.t('email_no_wishlist');
     try{await emailjs.send(emailjsServiceId,emailjsTemplateId,{to_email:g.email,email_subject:i18n.t('email_subject').replace('{event}',eventName),email_body:buildEmailHtml(g.name,rv.name,wt,eventName,budget||'N/A')});sent++;btn.innerHTML=`<i class="fas fa-spinner fa-spin"></i> ${sent}/${state.sorteoResult.length}...`;await sleep(2000);}catch(e){console.error(e);errors++;}}
   btn.disabled=false;btn.innerHTML=`<i class="fas fa-envelope"></i> ${i18n.t('sorteo_send_email')}`;toggleModal(false);
-  toast(!errors?i18n.t('sorteo_sent_ok').replace('{n}',sent):i18n.t('sorteo_sent_errors').replace('{sent}',sent).replace('{errors}',errors),!errors?'success':'error');
+  if(!errors)state.emailsSent=true;toast(!errors?i18n.t('sorteo_sent_ok').replace('{n}',sent):i18n.t('sorteo_sent_errors').replace('{sent}',sent).replace('{errors}',errors),!errors?'success':'error');
 }
 
 // ==================== CLOUD SYNC ====================
