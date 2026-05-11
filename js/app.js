@@ -345,7 +345,7 @@ async function sendEmails() {
   let sent=0,errors=0;
   for(const pair of state.sorteoResult){const g=map[pair.giverId],rv=map[pair.receiverId];if(!g?.email||!rv){errors++;continue;}
     const wt=(state.wishlists[rv.id]||[]).filter(w=>w.title?.trim()).map((w,i)=>{let l=`${i+1}. ${w.title}`;if(w.description)l+=` - ${w.description}`;if(w.link)l+=` | ${w.link}`;if(w.notes)l+=` | ${w.notes}`;return l;}).join('\n')||i18n.t('email_no_wishlist');
-    try{await emailjs.send(emailjsServiceId,emailjsTemplateId,{to_email:g.email,email_subject:i18n.t('email_subject').replace('{event}',eventName),email_body:buildEmailHtml(g.name,rv.name,wt,eventName,budget||'N/A')});sent++;}catch(e){console.error(e);errors++;}}
+    try{await emailjs.send(emailjsServiceId,emailjsTemplateId,{to_email:g.email,email_subject:i18n.t('email_subject').replace('{event}',eventName),email_body:buildEmailHtml(g.name,rv.name,wt,eventName,budget||'N/A')});sent++;btn.innerHTML=`<i class="fas fa-spinner fa-spin"></i> ${sent}/${state.sorteoResult.length}...`;await sleep(2000);}catch(e){console.error(e);errors++;}}
   btn.disabled=false;btn.innerHTML=`<i class="fas fa-envelope"></i> ${i18n.t('sorteo_send_email')}`;toggleModal(false);
   toast(!errors?i18n.t('sorteo_sent_ok').replace('{n}',sent):i18n.t('sorteo_sent_errors').replace('{sent}',sent).replace('{errors}',errors),!errors?'success':'error');
 }
