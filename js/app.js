@@ -53,8 +53,8 @@ function bindEvents() {
   document.getElementById('startSorteo').addEventListener('click', startSorteo);
   document.getElementById('modalSendEmail').addEventListener('click', sendEmails);
   document.getElementById('modalClose').addEventListener('click', () => toggleModal(false));
-  document.getElementById('syncToCloud').addEventListener('click', syncToCloud);
-  document.getElementById('syncFromCloud').addEventListener('click', syncFromCloud);
+  
+  
   document.getElementById('exportParticipants').addEventListener('click', () => exportExcel('participants'));
   document.getElementById('exportWishlists').addEventListener('click', () => exportExcel('wishlists'));
   document.getElementById('exportSorteo').addEventListener('click', () => exportExcel('sorteo'));
@@ -351,8 +351,8 @@ async function sendEmails() {
 }
 
 // ==================== CLOUD SYNC ====================
-async function syncToCloud(){toast('\u23f3','info');const ok=await CloudStorage.save(state);toast(ok?'\u2705 Uploaded':'\u274c Failed',ok?'success':'error');}
-async function syncFromCloud(){toast('\u23f3','info');const data=await CloudStorage.load();if(!data){toast('\u274c Failed','error');return;}state={config:data.config||{},families:data.families||[],wishlists:data.wishlists||{},sorteoResult:data.sorteoResult||null,sorteoDate:data.sorteoDate||null};loadConfigUI();renderFamilies();populateWishlistSelect();toast('\u2705 Downloaded','success');}
+
+
 
 // ==================== EXPORT ====================
 function exportExcel(type){
