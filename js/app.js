@@ -341,9 +341,30 @@ async function startSorteo() {
   toggleModal(true);
 }
 function buildRouletteWheel(members) {
-  const w=document.getElementById('rouletteWheel');w.querySelectorAll('.roulette-segment').forEach(e=>e.remove());
-  const colors=['#c0392b','#27ae60','#2980b9','#f39c12','#8e44ad','#e67e22','#1abc9c','#e74c3c'],angle=360/members.length;
-  members.forEach((m,i)=>{const s=document.createElement('div');s.className='roulette-segment';s.style.background=colors[i%8];s.style.setProperty('--half-angle',(angle/2)+'deg');s.style.transform=`rotate(${angle*i}deg)`;s.style.clipPath=`polygon(0% 100%,100% 100%,${50+50*Math.cos((angle-90)*Math.PI/180)}% ${50+50*Math.sin((angle-90)*Math.PI/180)}%)`;s.style.cssText+='width:100%;height:100%;top:0;left:0;transform-origin:50% 50%;';const sp=document.createElement('span');sp.textContent=m.name.length>10?m.name.substring(0,10)+'\u2026':m.name;s.appendChild(sp);w.appendChild(s);});
+  const w=document.getElementById('rouletteWheel');
+  w.querySelectorAll('.roulette-segment').forEach(e=>e.remove());
+  const colors=['#c0392b','#27ae60','#2980b9','#f39c12','#8e44ad','#e67e22','#1abc9c','#e74c3c'];
+  const angle=360/members.length;
+  // Use conic-gradient for the wheel background
+  let gradient='conic-gradient(';
+  members.forEach((m,i)=>{
+    const start=angle*i;
+    const end=angle*(i+1);
+    gradient+=colors[i%8]+' '+start+'deg '+end+'deg';
+    if(i<members.length-1)gradient+=',';
+  });
+  gradient+=')';
+  w.style.background=gradient;
+  // Add name labels
+  members.forEach((m,i)=>{
+    const s=document.createElement('div');
+    s.style.cssText='position:absolute;width:100%;height:100%;top:0;left:0;display:flex;align-items:flex-start;justify-content:center;padding-top:18%;';
+    s.style.transform='rotate('+(angle*i+angle/2)+'deg)';
+    const sp=document.createElement('span');
+    sp.style.cssText='font-size:0.55rem;font-weight:700;color:#fff;text-shadow:1px 1px 2px rgba(0,0,0,0.7);white-space:nowrap;transform:rotate(0deg);';
+    sp.textContent=m.name.length>8?m.name.substring(0,8)+'..':m.name;
+    s.appendChild(sp);s.className='roulette-segment';w.appendChild(s);
+  });
 }
 function showResults(result) {
   const members=getAllMembers(),map=Object.fromEntries(members.map(m=>[m.id,m])),c=document.getElementById('sorteoResults');c.classList.remove('hidden');

@@ -276,7 +276,7 @@ main {
 .roulette-wheel {
   width: 100%; height: 100%; border-radius: 50%;
   border: 8px solid var(--gold);
-  position: relative; overflow: hidden;
+  position: relative;
   box-shadow: 0 0 30px rgba(243,156,18,0.4);
 }
 .roulette-center {
