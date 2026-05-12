@@ -119,7 +119,7 @@ function handleRegister() {
 // ==================== THEME ====================
 function initTheme() { const t = localStorage.getItem('intercambio_theme') || 'dark'; document.documentElement.setAttribute('data-theme', t); updateThemeIcon(t); }
 function toggleTheme() { const n = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'; document.documentElement.setAttribute('data-theme', n); localStorage.setItem('intercambio_theme', n); updateThemeIcon(n); }
-function updateThemeIcon(t) { const b = document.getElementById('themeToggle'); if (b) b.innerHTML = t === 'dark' ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>'; }
+function updateThemeIcon(t) { const b = document.getElementById('themeToggle'); if (b) b.innerHTML = t === 'dark' ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>'; const r = document.getElementById('regThemeToggle'); if (r) r.innerHTML = t === 'dark' ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>'; }
 
 // ==================== LANGUAGE ====================
 function initLang() { i18n.setLang(localStorage.getItem('intercambio_lang') || 'es'); updateLangButton(); }

@@ -35,9 +35,10 @@
       <p style="font-weight:600;margin-bottom:0.5rem;" id="regAvatarLabel"></p>
       <div class="avatar-picker" id="avatarPicker"></div>
       <button class="btn btn-christmas" id="regEnter" style="margin-top:1rem;"></button>
-      <!-- Lang toggle on register -->
-      <div style="margin-top:1.5rem;">
+      <!-- Lang + Theme toggle on register -->
+      <div style="margin-top:1.5rem;display:flex;gap:0.5rem;justify-content:center;">
         <button class="lang-toggle" id="regLangToggle" style="background:var(--bg-card-alt);color:var(--text-primary);border:2px solid var(--border-color);">ES / EN</button>
+        <button class="lang-toggle" id="regThemeToggle" style="background:var(--bg-card-alt);color:var(--text-primary);border:2px solid var(--border-color);" onclick="toggleTheme()"><i class="fas fa-moon"></i></button>
       </div>
     </div>
   </div>

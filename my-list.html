@@ -322,9 +322,11 @@
           <button class="btn btn-christmas" id="btnRegister" style="flex:1;min-width:140px;margin:0;">
             <i class="fas fa-user-plus"></i> ${t('register')}
           </button>
+          <button class="lang-toggle" onclick="const n=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';document.documentElement.setAttribute('data-theme',n);localStorage.setItem('intercambio_theme',n);this.innerHTML=n==='dark'?'<i class=\\'fas fa-sun\\'></i>':'<i class=\\'fas fa-moon\\'></i>';" style="background:var(--bg-card-alt);color:var(--text-primary);border:2px solid var(--border-color);"><i class="fas fa-moon"></i></button>
         </div>
-        <div style="margin-top:1.5rem;">
+        <div style="margin-top:1.5rem;display:flex;gap:0.5rem;justify-content:center;">
           <button class="lang-toggle" onclick="toggleLang();showLanding();" style="background:var(--bg-card-alt);color:var(--text-primary);border:2px solid var(--border-color);">${lang === 'es' ? 'ES / EN' : 'EN / ES'}</button>
+          <button class="lang-toggle" onclick="const n=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';document.documentElement.setAttribute('data-theme',n);localStorage.setItem('intercambio_theme',n);this.innerHTML=n==='dark'?'<i class=\\'fas fa-sun\\'></i>':'<i class=\\'fas fa-moon\\'></i>';" style="background:var(--bg-card-alt);color:var(--text-primary);border:2px solid var(--border-color);"><i class="fas fa-moon"></i></button>
         </div>
       `;
 
