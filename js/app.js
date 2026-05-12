@@ -138,6 +138,7 @@ function initNavigation() {
     document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
     btn.classList.add('active'); document.getElementById(btn.dataset.section).classList.add('active');
     if (btn.dataset.section === 'wishlists') { populateWishlistSelect(); renderAllWishlists(); renderMemberUrls(); }
+      if (btn.dataset.section === 'families') { loadExtraRequests(); }
     if (btn.dataset.section === 'sorteo') checkSorteoReady();
   }));
   applyTranslations();
@@ -215,6 +216,29 @@ async function resetPassword(fid, mid) {
   const f = state.families.find(x => x.id === fid), m = f?.members?.find(x => x.id === mid);
   if (!m || !confirm(`Reset password for ${m.name}?`)) return;
   delete m.password; await CloudStorage.saveFamilies(state.families); toast('\ud83d\udd11 ' + m.name, 'success');
+}
+
+// ==================== EXTRA REQUESTS ====================
+async function loadExtraRequests() {
+  const requests = await CloudStorage.loadExtraRequests();
+  const card = document.getElementById('extraRequestsCard');
+  const container = document.getElementById('extraRequestsList');
+  const keys = Object.keys(requests || {});
+  if (!keys.length) { card.classList.add('hidden'); return; }
+  card.classList.remove('hidden');
+  const members = getAllMembers();
+  const map = Object.fromEntries(members.map(m => [m.id, m]));
+  container.innerHTML = keys.map(id => {
+    const m = map[id];
+    if (!m) return '';
+    return '<div style="display:flex;align-items:center;gap:0.5rem;padding:0.6rem;margin-bottom:0.5rem;background:var(--bg-card-alt);border-radius:8px;border-left:3px solid var(--gold);"><span style="flex:1;"><strong>' + esc(m.name) + '</strong> (' + esc(m.familyName) + ') requests an extra gift slot</span><button class="btn btn-sm btn-primary" onclick="approveExtraRequest(\x27' + id + '\x27)"><i class="fas fa-check"></i> Approve</button></div>';
+  }).join('');
+}
+async function approveExtraRequest(memberId) {
+  const current = await CloudStorage.loadExtraAllowed(memberId);
+  await CloudStorage.approveExtra(memberId, (current || 0) + 1);
+  toast('Approved +1 gift slot', 'success');
+  loadExtraRequests();
 }
 
 // ==================== WISHLISTS ====================
