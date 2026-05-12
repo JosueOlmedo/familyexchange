@@ -335,43 +335,15 @@ async function startSorteo() {
   const members=getAllMembers(),result=performSorteo(members);
   if(!result){toast(i18n.t('sorteo_impossible'),'error');return;}
   const btn=document.getElementById('startSorteo');btn.disabled=true;
-  document.getElementById('rouletteContainer').classList.add('active');buildRouletteWheel(members);
-  const wheel=document.getElementById('rouletteWheel'),rot=1800+Math.random()*1440;
-  wheel.style.transition='none';wheel.style.transform='rotate(0deg)';void wheel.offsetHeight;
-  wheel.style.transition='transform 4s cubic-bezier(0.17,0.67,0.12,0.99)';wheel.style.transform=`rotate(${rot}deg)`;
-  await sleep(4200);
+  btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Sorteando...';
+  await sleep(3000);
   state.sorteoResult=result;state.sorteoDate=new Date().toISOString();
   await CloudStorage.saveSorteo(result,state.sorteoDate);
   showResults(result);btn.disabled=false;
+  btn.innerHTML='<i class="fas fa-play"></i> ' + i18n.t('sorteo_start');
   document.getElementById('modalTitle').textContent=i18n.t('sorteo_complete_title');
   document.getElementById('modalMessage').textContent=i18n.t('sorteo_complete_msg').replace('{n}',result.length);
   toggleModal(true);
-}
-function buildRouletteWheel(members) {
-  const w=document.getElementById('rouletteWheel');
-  w.querySelectorAll('.roulette-segment').forEach(e=>e.remove());
-  const colors=['#c0392b','#27ae60','#2980b9','#f39c12','#8e44ad','#e67e22','#1abc9c','#e74c3c'];
-  const angle=360/members.length;
-  // Use conic-gradient for the wheel background
-  let gradient='conic-gradient(';
-  members.forEach((m,i)=>{
-    const start=angle*i;
-    const end=angle*(i+1);
-    gradient+=colors[i%8]+' '+start+'deg '+end+'deg';
-    if(i<members.length-1)gradient+=',';
-  });
-  gradient+=')';
-  w.style.background=gradient;
-  // Add name labels
-  members.forEach((m,i)=>{
-    const s=document.createElement('div');
-    s.style.cssText='position:absolute;width:100%;height:100%;top:0;left:0;display:flex;align-items:flex-start;justify-content:center;padding-top:18%;';
-    s.style.transform='rotate('+(angle*i+angle/2)+'deg)';
-    const sp=document.createElement('span');
-    sp.style.cssText='font-size:0.55rem;font-weight:700;color:#fff;text-shadow:1px 1px 2px rgba(0,0,0,0.7);white-space:nowrap;transform:rotate(0deg);';
-    sp.textContent=m.name.length>8?m.name.substring(0,8)+'..':m.name;
-    s.appendChild(sp);s.className='roulette-segment';w.appendChild(s);
-  });
 }
 function showResults(result) {
   const members=getAllMembers(),map=Object.fromEntries(members.map(m=>[m.id,m])),c=document.getElementById('sorteoResults');c.classList.remove('hidden');
