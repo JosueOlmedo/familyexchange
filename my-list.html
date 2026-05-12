@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="css/styles.css">
   <link href="https://fonts.googleapis.com/css2?family=Mountains+of+Christmas:wght@400;700&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js" async></script>
 </head>
 <body>
@@ -703,7 +704,7 @@
     // ==================== PURCHASE + MESSAGES ====================
     async function markPurchased() {
       const msg = lang==='es' ? 'Confirmas que ya compraste el regalo? Esto bloqueara la lista de tu amigo.' : 'Confirm you bought the gift? This will lock your friend\u0027s list.';
-      if (!confirm(msg)) return;
+      const r = await Swal.fire({title:msg,icon:'question',showCancelButton:true,confirmButtonColor:'#27ae60',cancelButtonColor:'#c0392b',confirmButtonText:lang==='es'?'Si':'Yes',cancelButtonText:lang==='es'?'Cancelar':'Cancel',background:'var(--bg-card)',color:'var(--text-primary)'}); if (!r.isConfirmed) return;
       await CloudStorage.setPurchased(cloudData.sorteoResult.find(r=>r.giverId===memberId).receiverId, true);
       document.getElementById('markPurchasedBtn').disabled = true;
       document.getElementById('markPurchasedBtn').innerHTML = `<i class="fas fa-check"></i> ${lang==='es'?'Comprado!':'Purchased!'}`;
@@ -798,9 +799,12 @@
     // ==================== UTILS ====================
     function esc(s) { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
     function toast(msg, type = 'info') {
-      const el = document.getElementById('toast');
-      el.textContent = msg; el.className = `toast ${type}`;
-      setTimeout(() => el.classList.add('hidden'), 3500);
+      const iconMap = {success:'success', error:'error', info:'info'};
+      if (typeof Swal !== 'undefined') {
+        Swal.fire({toast:true,position:'bottom-end',icon:iconMap[type]||'info',title:msg,showConfirmButton:false,timer:3500,timerProgressBar:true,background:'var(--bg-card)',color:'var(--text-primary)'});
+      } else {
+        const el = document.getElementById('toast'); el.textContent = msg; el.className = 'toast ' + type; setTimeout(() => el.classList.add('hidden'), 3500);
+      }
     }
     function showError(msg) {
       document.getElementById('authBox').innerHTML = `

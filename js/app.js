@@ -16,10 +16,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Load state from Firebase
   const data = await CloudStorage.load();
   if (data) state = { config: data.config || {}, families: data.families || [], wishlists: data.wishlists || {}, sorteoResult: data.sorteoResult || null, sorteoDate: data.sorteoDate || null };
-  if (session) {
-    state.config.adminPin ? showPinScreen() : showApp();
+  // Admin: always require PIN if configured, skip registration
+  if (state.config.adminPin) {
+    showPinScreen();
   } else {
-    showRegistration();
+    showApp();
   }
 });
 
@@ -28,9 +29,9 @@ function showApp() {
   document.getElementById('pinOverlay').classList.add('hidden');
   document.getElementById('mainHeader').classList.remove('hidden');
   document.getElementById('mainContent').classList.remove('hidden');
-  document.getElementById('userName').textContent = session.name;
+  document.getElementById('userName').textContent = 'Admin';
   const av = document.getElementById('userAvatar');
-  av.textContent = session.avatar; av.style.display = 'flex';
+  av.textContent = '\u{1F385}'; av.style.display = 'flex';
   initNavigation(); loadConfigUI(); renderFamilies(); populateWishlistSelect(); renderMemberUrls(); checkSorteoReady(); bindEvents();
   // Auto-refresh from Firebase every 30s
   setInterval(async () => {
@@ -60,6 +61,7 @@ function bindEvents() {
   document.getElementById('exportSorteo').addEventListener('click', () => exportExcel('sorteo'));
   document.getElementById('exportAll').addEventListener('click', () => exportExcel('all'));
   document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+  document.getElementById('logoutAdmin').addEventListener('click', logoutAdmin);
   document.getElementById('testEmail').addEventListener('click', sendTestEmails);
   document.getElementById('langToggle').addEventListener('click', toggleLang);
 }
@@ -173,8 +175,23 @@ async function saveConfig() {
 function uid() { return Date.now().toString(36) + Math.random().toString(36).substr(2, 5); }
 function esc(s) { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
-function toast(msg, type = 'info') { const e = document.getElementById('toast'); e.textContent = msg; e.className = `toast ${type}`; setTimeout(() => e.classList.add('hidden'), 3500); }
+function toast(msg, type = 'info') {
+  const iconMap = {success:'success', error:'error', info:'info'};
+  if (typeof Swal !== 'undefined') {
+    Swal.fire({toast:true,position:'bottom-end',icon:iconMap[type]||'info',title:msg,showConfirmButton:false,timer:3500,timerProgressBar:true,background:'var(--bg-card)',color:'var(--text-primary)'});
+  } else {
+    const e = document.getElementById('toast'); e.textContent = msg; e.className = 'toast ' + type; setTimeout(() => e.classList.add('hidden'), 3500);
+  }
+}
 function toggleModal(show) { document.getElementById('modalOverlay').classList.toggle('hidden', !show); }
+async function swalConfirm(text) {
+  if (typeof Swal === 'undefined') return confirm(text);
+  const r = await Swal.fire({title:text,icon:'question',showCancelButton:true,confirmButtonColor:'#27ae60',cancelButtonColor:'#c0392b',confirmButtonText:i18n.current==='es'?'Si':'Yes',cancelButtonText:i18n.current==='es'?'Cancelar':'Cancel',background:'var(--bg-card)',color:'var(--text-primary)'});
+  return r.isConfirmed;
+}
+function logoutAdmin() {
+  location.reload();
+}
 function getAllMembers() { return state.families.flatMap(f => f.members.filter(m => m.name?.trim()).map(m => ({ ...m, familyId: f.id, familyName: f.name }))); }
 
 // ==================== FAMILIES ====================
@@ -221,7 +238,7 @@ async function resetPassword(fid, mid) {
 
 // ==================== UNLOCK MEMBER ====================
 async function unlockMember(mid) {
-  if (!confirm('Unlock this member list?')) return;
+  if (!await swalConfirm('Unlock this member list?')) return;
   await CloudStorage.setPurchased(mid, null);
   toast('Unlocked', 'success');
 }
@@ -385,7 +402,7 @@ async function sendTestEmails() {
   if(!emailjsPublicKey||!emailjsServiceId||!emailjsTemplateId){toast(i18n.t('sorteo_configure_email'),'error');return;}
   const members=getAllMembers().filter(m=>m.email);
   if(!members.length){toast('No members with email','error');return;}
-  if(!confirm('Send TEST email to all '+members.length+' members with email?'))return;
+  if(!await swalConfirm('Send TEST email to all '+members.length+' members with email?'))return;
   try{emailjs.init(emailjsPublicKey);}catch(e){toast('EmailJS error','error');return;}
   const btn=document.getElementById('testEmail');
   btn.disabled=true;btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Sending...';
