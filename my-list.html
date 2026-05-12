@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="css/styles.css">
   <link href="https://fonts.googleapis.com/css2?family=Mountains+of+Christmas:wght@400;700&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js" async></script>
 </head>
 <body>
   <div class="snowflakes" aria-hidden="true" id="snowflakes"></div>
@@ -716,6 +717,8 @@
       const receiverId = cloudData.sorteoResult.find(r=>r.giverId===memberId).receiverId;
       await CloudStorage.sendMessage(receiverId, { text, date: new Date().toISOString() });
       input.value = '';
+      // Send email notification
+      notifyByEmail(receiverId, text, false);
       toast(lang==='es'?'Mensaje enviado':'Message sent', 'success');
     }
 
@@ -728,6 +731,8 @@
       if (!myGiver) { toast(lang==='es'?'No hay sorteo aun':'No draw yet', 'error'); return; }
       await CloudStorage.sendMessage(myGiver.giverId, { text: '(Reply) ' + text, date: new Date().toISOString() });
       input.value = '';
+      // Send email notification to giver
+      notifyByEmail(myGiver.giverId, text, true);
       toast(lang==='es'?'Respuesta enviada':'Reply sent', 'success');
     }
 
@@ -735,6 +740,39 @@
       await CloudStorage.requestExtra(memberId);
       toast(lang==='es'?'Solicitud enviada al admin':'Request sent to admin', 'success');
       document.getElementById('requestExtraBtn').disabled = true;
+    }
+
+    // ==================== EMAIL NOTIFICATIONS ====================
+    async function notifyByEmail(targetId, messageText, isReply) {
+      if (!cloudData.config?.emailjsPublicKey || !cloudData.config?.emailjsServiceId || !cloudData.config?.emailjsTemplateId) return;
+      // Find target member email
+      let targetEmail = null;
+      let targetName = null;
+      for (const f of cloudData.families) {
+        const m = f.members.find(m => m.id === targetId);
+        if (m && m.email) { targetEmail = m.email; targetName = m.name; break; }
+      }
+      if (!targetEmail) return;
+      try {
+        emailjs.init(cloudData.config.emailjsPublicKey);
+        const siteUrl = window.location.href.split('?')[0];
+        const subject = isReply
+          ? (lang==='es' ? '\u{1F4AC} Tu amigo te respondio - ' : '\u{1F4AC} Your friend replied - ') + (cloudData.config.eventName || 'Gift Exchange')
+          : (lang==='es' ? '\u{1F381} Tu amigo secreto te envio un mensaje - ' : '\u{1F381} Your secret friend sent you a message - ') + (cloudData.config.eventName || 'Gift Exchange');
+        const body = '<div style="font-family:Segoe UI,sans-serif;max-width:500px;margin:0 auto;border-radius:12px;overflow:hidden;border:1px solid #eee;">' +
+          '<div style="background:linear-gradient(135deg,#f39c12,#e67e22);padding:20px;text-align:center;">' +
+          '<h2 style="color:#fff;margin:0;">' + (isReply ? (lang==='es'?'Tu amigo te respondio':'Your friend replied') : (lang==='es'?'Mensaje de tu amigo secreto':'Message from your secret friend')) + '</h2></div>' +
+          '<div style="padding:25px;background:#fff;">' +
+          '<div style="background:#f8f9fa;border-left:4px solid #f39c12;padding:15px;border-radius:8px;margin:15px 0;">' +
+          '<p style="font-size:16px;color:#333;margin:0;">"' + messageText.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '"</p></div>' +
+          '<p style="text-align:center;margin-top:20px;"><a href="' + siteUrl + '" style="background:#27ae60;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;">' + (lang==='es'?'Ir al sitio para contestar':'Go to site to reply') + '</a></p>' +
+          '</div></div>';
+        await emailjs.send(cloudData.config.emailjsServiceId, cloudData.config.emailjsTemplateId, {
+          to_email: targetEmail,
+          email_subject: subject,
+          email_body: body
+        });
+      } catch(e) { console.error('Notification email error:', e); }
     }
 
     // ==================== AVATAR PICKER ====================
