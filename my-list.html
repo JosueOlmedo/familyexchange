@@ -698,7 +698,7 @@
 
     // ==================== PURCHASE + MESSAGES ====================
     async function markPurchased() {
-      const msg = lang==='es' ? 'Confirmas que ya compraste el regalo? Esto bloqueara la lista de tu amigo.' : 'Confirm you bought the gift? This will lock your friend's list.';
+      const msg = lang==='es' ? 'Confirmas que ya compraste el regalo? Esto bloqueara la lista de tu amigo.' : 'Confirm you bought the gift? This will lock your friend\u0027s list.';
       if (!confirm(msg)) return;
       await CloudStorage.setPurchased(cloudData.sorteoResult.find(r=>r.giverId===memberId).receiverId, true);
       document.getElementById('markPurchasedBtn').disabled = true;
