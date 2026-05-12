@@ -187,7 +187,7 @@ async function addFamily() {
 function renderFamilies() {
   const c = document.getElementById('familiesList');
   if (!state.families.length) { c.innerHTML = `<div class="card" style="text-align:center;color:var(--text-secondary);"><i class="fas fa-users" style="font-size:2rem;"></i><p>${i18n.t('families_empty')}</p></div>`; return; }
-  c.innerHTML = state.families.map(f => `<div class="family-card"><h3><span><i class="fas fa-home"></i> ${esc(f.name)}</span><button class="btn btn-danger" onclick="removeFamily('${f.id}')"><i class="fas fa-trash"></i></button></h3><div id="members-${f.id}">${(f.members||[]).map(m => `<div class="member-row"><input type="text" value="${esc(m.name)}" placeholder="${i18n.t('name')}" onchange="updateMember('${f.id}','${m.id}','name',this.value)"><input type="email" value="${esc(m.email||'')}" placeholder="${i18n.t('email')}" onchange="updateMember('${f.id}','${m.id}','email',this.value)"><button class="btn btn-sm btn-gold" onclick="resetPassword('${f.id}','${m.id}')" title="Reset password"><i class="fas fa-key"></i></button><button class="btn btn-danger" onclick="removeMember('${f.id}','${m.id}')"><i class="fas fa-times"></i></button></div>`).join('')}</div><button class="btn btn-secondary" onclick="addMember('${f.id}')" style="margin-top:0.5rem;"><i class="fas fa-user-plus"></i> ${i18n.t('families_add_member')}</button></div>`).join('');
+  c.innerHTML = state.families.map(f => `<div class="family-card"><h3><span><i class="fas fa-home"></i> ${esc(f.name)}</span><button class="btn btn-danger" onclick="removeFamily('${f.id}')"><i class="fas fa-trash"></i></button></h3><div id="members-${f.id}">${(f.members||[]).map(m => `<div class="member-row"><input type="text" value="${esc(m.name)}" placeholder="${i18n.t('name')}" onchange="updateMember('${f.id}','${m.id}','name',this.value)"><input type="email" value="${esc(m.email||'')}" placeholder="${i18n.t('email')}" onchange="updateMember('${f.id}','${m.id}','email',this.value)"><button class="btn btn-sm btn-gold" onclick="resetPassword('${f.id}','${m.id}')" title="Reset password"><i class="fas fa-key"></i></button><button class="btn btn-sm btn-secondary" onclick="unlockMember(\'${m.id}\')" title="Unlock list"><i class="fas fa-lock-open"></i></button><button class="btn btn-danger" onclick="removeMember('${f.id}','${m.id}')"><i class="fas fa-times"></i></button></div>`).join('')}</div><button class="btn btn-secondary" onclick="addMember('${f.id}')" style="margin-top:0.5rem;"><i class="fas fa-user-plus"></i> ${i18n.t('families_add_member')}</button></div>`).join('');
 }
 async function addMember(fid) {
   const f = state.families.find(x => x.id === fid); if (!f) return;
@@ -216,6 +216,13 @@ async function resetPassword(fid, mid) {
   const f = state.families.find(x => x.id === fid), m = f?.members?.find(x => x.id === mid);
   if (!m || !confirm(`Reset password for ${m.name}?`)) return;
   delete m.password; await CloudStorage.saveFamilies(state.families); toast('\ud83d\udd11 ' + m.name, 'success');
+}
+
+// ==================== UNLOCK MEMBER ====================
+async function unlockMember(mid) {
+  if (!confirm('Unlock this member list?')) return;
+  await CloudStorage.setPurchased(mid, null);
+  toast('Unlocked', 'success');
 }
 
 // ==================== EXTRA REQUESTS ====================
