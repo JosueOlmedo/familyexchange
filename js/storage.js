@@ -185,5 +185,111 @@ const CloudStorage = {
     } catch (e) {
       return [];
     }
+  },
+
+  // ATOMIC: Mark gift as purchased for a receiver
+  async setPurchased(receiverId, value) {
+    try {
+      const res = await fetch(`${this.dbUrl}/exchange/purchased/${receiverId}.json`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(value)
+      });
+      return res.ok;
+    } catch (e) {
+      console.error('Firebase setPurchased error:', e);
+      return false;
+    }
+  },
+
+  // ATOMIC: Send anonymous message to receiver
+  async sendMessage(receiverId, message) {
+    try {
+      const res = await fetch(`${this.dbUrl}/exchange/messages/${receiverId}.json`);
+      const current = (await res.json()) || [];
+      const arr = Array.isArray(current) ? current : Object.values(current);
+      arr.push(message);
+      const res2 = await fetch(`${this.dbUrl}/exchange/messages/${receiverId}.json`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(arr)
+      });
+      return res2.ok;
+    } catch (e) {
+      console.error('Firebase sendMessage error:', e);
+      return false;
+    }
+  },
+
+  // ATOMIC: Load messages for a receiver
+  async loadMessages(receiverId) {
+    try {
+      const res = await fetch(`${this.dbUrl}/exchange/messages/${receiverId}.json`);
+      const data = await res.json();
+      if (!data) return [];
+      return Array.isArray(data) ? data : Object.values(data);
+    } catch (e) {
+      return [];
+    }
+  },
+
+  // ATOMIC: Request extra gift slot
+  async requestExtra(receiverId) {
+    try {
+      const res = await fetch(`${this.dbUrl}/exchange/extraRequests/${receiverId}.json`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(true)
+      });
+      return res.ok;
+    } catch (e) {
+      return false;
+    }
+  },
+
+  // ATOMIC: Approve extra gift slots (admin)
+  async approveExtra(receiverId, count) {
+    try {
+      const res = await fetch(`${this.dbUrl}/exchange/extraAllowed/${receiverId}.json`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(count)
+      });
+      // Clear the request
+      await fetch(`${this.dbUrl}/exchange/extraRequests/${receiverId}.json`, { method: 'DELETE' });
+      return res.ok;
+    } catch (e) {
+      return false;
+    }
+  },
+
+  // Load purchased status for a receiver
+  async loadPurchased(receiverId) {
+    try {
+      const res = await fetch(`${this.dbUrl}/exchange/purchased/${receiverId}.json`);
+      return (await res.json()) || false;
+    } catch (e) {
+      return false;
+    }
+  },
+
+  // Load all extra requests (admin)
+  async loadExtraRequests() {
+    try {
+      const res = await fetch(`${this.dbUrl}/exchange/extraRequests.json`);
+      return (await res.json()) || {};
+    } catch (e) {
+      return {};
+    }
+  },
+
+  // Load extra allowed for a member
+  async loadExtraAllowed(memberId) {
+    try {
+      const res = await fetch(`${this.dbUrl}/exchange/extraAllowed/${memberId}.json`);
+      return (await res.json()) || 0;
+    } catch (e) {
+      return 0;
+    }
   }
 };
