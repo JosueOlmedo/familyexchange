@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
@@ -361,12 +361,11 @@
         <p style="margin-top:1rem;"><a href="#" id="backToLanding" style="color:var(--green);font-size:0.85rem;">${t('back')}</a></p>
       `;
 
+      // Add forgot password hint (before listeners to avoid innerHTML destroying them)
+      document.getElementById('authContent').insertAdjacentHTML('beforeend', '<p style="color:var(--text-secondary);font-size:0.8rem;margin-top:0.5rem;">' + (lang==='es' ? 'Â¿Olvidaste tu contraseÃ±a? Contacta al organizador.' : 'Forgot password? Contact the organizer.') + '</p>');
       document.getElementById('loginEnter').addEventListener('click', handleLogin);
       document.getElementById('loginPassword').addEventListener('keydown', e => { if (e.key === 'Enter') handleLogin(); });
       document.getElementById('backToLanding').addEventListener('click', (e) => { e.preventDefault(); showLanding(); });
-      // Add forgot password hint
-      const loginContent = document.getElementById('authContent');
-      loginContent.innerHTML += '<p style="color:var(--text-secondary);font-size:0.8rem;margin-top:0.5rem;">' + (lang==='es' ? 'Â¿Olvidaste tu contraseÃ±a? Contacta al organizador.' : 'Forgot password? Contact the organizer.') + '</p>';
     }
 
     function handleLogin() {
