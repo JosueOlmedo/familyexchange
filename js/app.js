@@ -60,6 +60,7 @@ function bindEvents() {
   document.getElementById('exportSorteo').addEventListener('click', () => exportExcel('sorteo'));
   document.getElementById('exportAll').addEventListener('click', () => exportExcel('all'));
   document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+  document.getElementById('testEmail').addEventListener('click', sendTestEmails);
   document.getElementById('langToggle').addEventListener('click', toggleLang);
 }
 
@@ -377,6 +378,29 @@ async function sendEmails() {
 // ==================== CLOUD SYNC ====================
 
 
+
+// ==================== TEST EMAIL ====================
+async function sendTestEmails() {
+  const {emailjsPublicKey,emailjsServiceId,emailjsTemplateId,eventName}=state.config;
+  if(!emailjsPublicKey||!emailjsServiceId||!emailjsTemplateId){toast(i18n.t('sorteo_configure_email'),'error');return;}
+  const members=getAllMembers().filter(m=>m.email);
+  if(!members.length){toast('No members with email','error');return;}
+  if(!confirm('Send TEST email to all '+members.length+' members with email?'))return;
+  try{emailjs.init(emailjsPublicKey);}catch(e){toast('EmailJS error','error');return;}
+  const btn=document.getElementById('testEmail');
+  btn.disabled=true;btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Sending...';
+  let sent=0,errors=0;
+  for(const m of members){
+    const body='<div style="font-family:Segoe UI,sans-serif;max-width:500px;margin:0 auto;border-radius:12px;overflow:hidden;border:1px solid #eee;"><div style="background:linear-gradient(135deg,#c0392b,#922b21);padding:20px;text-align:center;"><h2 style="color:#fff;margin:0;">'+esc(eventName)+' - TEST</h2></div><div style="padding:25px;background:#fff;"><p style="font-size:16px;color:#333;">Hola <strong>'+esc(m.name)+'</strong>,</p><p>Este es un correo de PRUEBA para verificar que te llegan las notificaciones del intercambio.</p><p style="color:#999;">Si recibes esto, todo funciona correctamente. No necesitas hacer nada.</p></div></div>';
+    try{
+      await emailjs.send(emailjsServiceId,emailjsTemplateId,{to_email:m.email,email_subject:'\u{1F384} TEST - '+eventName,email_body:body});
+      sent++;btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> '+sent+'/'+members.length+'...';
+      await sleep(2000);
+    }catch(e){console.error(e);errors++;}
+  }
+  btn.disabled=false;btn.innerHTML='<i class="fas fa-flask"></i> Test Email (send to all)';
+  toast(errors?'Sent: '+sent+' | Errors: '+errors:'All '+sent+' test emails sent!',errors?'error':'success');
+}
 
 // ==================== EXPORT ====================
 function exportExcel(type){
